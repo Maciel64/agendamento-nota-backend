@@ -1,6 +1,6 @@
 export class UserAlreadyExistsError extends Error {
   constructor() {
-    super(`User with already exists.`);
+    super(`Usuário com este e-mail já existe.`);
     this.name = "UserAlreadyExistsError";
   }
 }

@@ -6,6 +6,8 @@ import {
   varchar,
   boolean,
   index,
+  jsonb,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -136,6 +138,57 @@ export const appointmentRelations = relations(appointment, ({ one }) => ({
 export const reportRelations = relations(report, ({ one }) => ({
   user: one(user, {
     fields: [report.userId],
+    references: [user.id],
+  }),
+}));
+
+export const business = pgTable("business", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  config: jsonb("config").notNull().default({
+    hero: { title: "Novo Site" },
+    theme: { primaryColor: "#000" },
+    services: [],
+  }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+export const businessRelations = relations(business, ({ one }) => ({
+  user: one(user, {
+    fields: [business.userId],
+    references: [user.id],
+  }),
+}));
+
+export const studios = pgTable(
+  "studios",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    slug: text("slug").notNull().unique(),
+    ownerId: text("owner_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [uniqueIndex("studios_slug_idx").on(table.slug)]
+);
+
+export const studiosRelations = relations(studios, ({ one }) => ({
+  owner: one(user, {
+    fields: [studios.ownerId],
     references: [user.id],
   }),
 }));

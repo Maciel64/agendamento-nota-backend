@@ -9,6 +9,8 @@ import { ListUsersUseCase } from "./modules/user/application/use-cases/list-user
 import { UserRepository } from "./modules/user/adapters/out/user.repository";
 import { appointmentController } from "./modules/appointments/adapters/in/http/appointment.controller";
 import { reportController } from "./modules/reports/adapters/in/http/report.controller";
+import { businessController } from "./modules/business/adapters/in/http/business.controller";
+import { studiosController } from "./modules/studios/adapters/in/http/studios.controller";
 
 const userRepository = new UserRepository();
 const createUserUseCase = new CreateUserUseCase(userRepository);
@@ -16,26 +18,64 @@ const listUsersUseCase = new ListUsersUseCase(userRepository);
 const userController = new UserController(createUserUseCase, listUsersUseCase);
 
 const app = new Elysia()
+  .onRequest(({ request }) => {
+    const url = new URL(request.url);
+    if (url.pathname !== "/health") { // Evitar flood de logs se houver healthcheck
+      console.log(`\n[${new Date().toISOString()}] ${request.method} ${url.pathname}`);
+      console.log(`> Origin: ${request.headers.get("origin") || "N/A"}`);
+      console.log(`> Cookie: ${request.headers.get("cookie") ? "Presente" : "AUSENTE"}`);
+      if (request.headers.get("cookie")) {
+        console.log(`> Cookie Detail: ${request.headers.get("cookie")?.substring(0, 50)}...`);
+      }
+    }
+  })
   .use(
     cors({
-      origin: [
-        "http://localhost:3000",
-        "http://localhost:3002",
-        ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
-        ...(process.env.PLATFORM_URL ? [process.env.PLATFORM_URL] : []),
-      ],
-      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      origin: (request) => {
+        const origin = request.headers.get("origin");
+        if (!origin) return true;
+
+        try {
+          const url = new URL(origin);
+          // Permite localhost e qualquer subdomínio de localhost
+          if (url.hostname === "localhost" || url.hostname.endsWith(".localhost")) {
+            return true;
+          }
+
+          // Permitir URLs de produção do .env
+          if (
+            (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) ||
+            (process.env.PLATFORM_URL && origin === process.env.PLATFORM_URL)
+          ) {
+            return true;
+          }
+        } catch (e) {
+          return false;
+        }
+
+        return false;
+      },
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
       credentials: true,
       allowedHeaders: ["Content-Type", "Authorization"],
     })
   )
   .mount(auth.handler)
-  .use(authPlugin)
+  .use(studiosController)
   .use(userController.registerRoutes())
   .use(appointmentController)
   .use(reportController)
-  .get("/user", ({ user }: { user: User | null }) => user, {
-    auth: true,
+  .use(businessController)
+  .get("/user", async ({ request, set }) => {
+    // Para a rota /user, precisamos validar a sessão manualmente ou usar o plugin localmente
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+    if (!session) {
+      set.status = 401;
+      return { error: "Unauthorized" };
+    }
+    return session.user;
   })
   .listen(3001);
 

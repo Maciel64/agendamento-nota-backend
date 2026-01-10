@@ -1,0 +1,27 @@
+import { BusinessRepository } from "../../adapters/out/business.repository";
+import { CreateBusinessDTO } from "../../adapters/in/dtos/business.dto";
+
+export class CreateBusinessUseCase {
+  constructor(private businessRepository: BusinessRepository) {}
+
+  async execute(userId: string, data: CreateBusinessDTO) {
+    const existingBusiness = await this.businessRepository.findBySlug(data.slug);
+
+    if (existingBusiness) {
+      throw new Error("Slug already exists");
+    }
+
+    const newBusiness = await this.businessRepository.create({
+      id: crypto.randomUUID(),
+      name: data.name,
+      slug: data.slug,
+      userId: userId,
+      config: {
+        hero: { title: "Novo Site" },
+        theme: { primaryColor: "#000" },
+      },
+    });
+
+    return newBusiness;
+  }
+}
