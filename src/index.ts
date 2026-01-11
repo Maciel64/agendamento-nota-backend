@@ -47,7 +47,9 @@ const app = new Elysia()
       );
       if (request.headers.get("cookie")) {
         console.log(
-          `> Cookie Detail: ${request.headers.get("cookie")?.substring(0, 50)}...`
+          `> Cookie Detail: ${request.headers
+            .get("cookie")
+            ?.substring(0, 50)}...`
         );
       }
     }
@@ -74,8 +76,9 @@ const app = new Elysia()
       return { error: "Unauthorized" };
     }
     return session.user;
-  })
-  .listen(3001);
+  });
+
+export default app;
 
 console.log(
   `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
