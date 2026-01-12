@@ -15,10 +15,12 @@ export const auth = betterAuth({
     "http://*.localhost:3000",
     "https://agendamento-nota-front.vercel.app",
     "https://agendamento-nota-backend.vercel.app",
+    "https://*.vercel.app",
     ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
     ...(process.env.PLATFORM_URL ? [process.env.PLATFORM_URL] : []),
   ],
   advanced: {
+    cookiePrefix: "better-auth",
     crossSubDomainCookies: {
       enabled: true,
     },
@@ -38,6 +40,24 @@ export const auth = betterAuth({
   hooks: {
     before: async (context: any) => {
       const path = context.path || "";
+
+      // Proteção contra 500 no sign-out se não houver sessão
+      if (path.includes("/sign-out")) {
+        const session = await auth.api.getSession({
+          headers: context.headers,
+        });
+
+        if (!session) {
+          console.log(`[AUTH_BEFORE_HOOK] Sign-out ignorado: nenhuma sessão ativa para ${path}`);
+          return {
+            response: new Response(JSON.stringify({ success: true }), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            }),
+          };
+        }
+      }
+
       if (path.startsWith("/sign-in") || path.startsWith("/sign-up")) {
         const body = context.body || {};
         console.log(`\n[AUTH_DEBUG] Requisição em ${path}:`, body.email || "sem email");
