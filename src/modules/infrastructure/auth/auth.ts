@@ -108,9 +108,13 @@ export const auth = betterAuth({
           return response;
         }
 
-        // Se for sign-out, retornamos a resposta original ou um objeto vazio seguro
+        // Se for sign-out, garantimos um retorno JSON para evitar Unexpected EOF
         if (path.includes("/sign-out")) {
-          return response || { success: true };
+          console.log(`[AUTH_AFTER_HOOK] Sign-out processado para ${path}`);
+          return new Response(JSON.stringify({ success: true }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          });
         }
 
         const isAuthPath =
