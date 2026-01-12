@@ -104,14 +104,20 @@ export const auth = betterAuth({
             .limit(1);
 
           if (userBusiness) {
-            console.log(`[AUTH_AFTER_HOOK] Injetando business ${userBusiness.slug} para usuário ${user.id}`);
-            // Injeta os dados do negócio no JSON de resposta
+            console.log(`[AUTH_AFTER_HOOK] Injetando business (slug: ${userBusiness.slug}) para usuário ${user.id}`);
+
+            // Garante que o slug esteja dentro do objeto business e também na raiz do usuário para facilitar
+            const businessData = {
+              ...userBusiness,
+              slug: userBusiness.slug
+            };
+
             if (response.user) {
-              response.user.business = userBusiness;
+              response.user.business = businessData;
               response.user.slug = userBusiness.slug;
             }
             if (response.session && response.session.user) {
-              response.session.user.business = userBusiness;
+              response.session.user.business = businessData;
               response.session.user.slug = userBusiness.slug;
             }
           } else {
