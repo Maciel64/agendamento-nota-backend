@@ -24,6 +24,8 @@ const app = new Elysia()
         "http://localhost:3000",
         "http://localhost:3002",
         "http://lucas-studio.localhost:3000",
+        "https://agendamento-nota-front.vercel.app",
+        "https://agendamento-nota-backend.vercel.app",
         ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
         ...(process.env.PLATFORM_URL ? [process.env.PLATFORM_URL] : []),
       ],
