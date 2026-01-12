@@ -21,6 +21,7 @@ export const auth = betterAuth({
   ],
   advanced: {
     cookiePrefix: "better-auth",
+    useHeader: true, // Habilita o uso do header Authorization: Bearer <token>
     crossSubDomainCookies: {
       enabled: true,
     },
@@ -41,10 +42,15 @@ export const auth = betterAuth({
     before: async (context: any) => {
       const path = context.path || "";
 
-      // Log de depuração para cookies recebidos
+      // Log de depuração de entrada conforme solicitado
+      console.log(`>>> [BACKEND] Requisição em ${path} | Header Authorization recebido:`, context.headers?.get("authorization") ? "SIM" : "NÃO");
+
+      // Log de depuração para tokens recebidos
       if (path.includes("/get-session")) {
+        const authHeader = context.headers?.get("authorization") || "AUSENTE";
         const cookieHeader = context.headers?.get("cookie") || "AUSENTE";
-        console.log(`[AUTH_DEBUG] get-session chamado. Cookie Header: ${cookieHeader.substring(0, 50)}...`);
+        console.log(`[AUTH_DEBUG] get-session - Token (Header): ${authHeader.substring(0, 30)}...`);
+        console.log(`[AUTH_DEBUG] get-session - Cookie: ${cookieHeader.substring(0, 30)}...`);
       }
 
       // Proteção contra 500 no sign-out se não houver sessão
@@ -196,5 +202,13 @@ export const auth = betterAuth({
   ],
   emailAndPassword: {
     enabled: true,
+  },
+  // Estrutura correta para habilitar Bearer Token na versão 1.x
+  secondaryStorage: {
+    get: async (key) => {
+      return null;
+    },
+    set: async (key, value, expiration) => { },
+    delete: async (key) => { },
   },
 });
