@@ -22,13 +22,21 @@ export const auth = betterAuth({
     crossSubDomainCookies: {
       enabled: true,
     },
-    useSecureCookies: false,
+    // No Vercel/Produção, useSecureCookies deve ser true para permitir SameSite=None
+    useSecureCookies: process.env.NODE_ENV === "production",
   },
   session: {
     cookieCache: {
       enabled: true,
       maxAge: 5 * 60,
     },
+    // Garantir que os cookies funcionem entre domínios diferentes no Vercel
+    cookie: {
+      attributes: {
+        sameSite: "None",
+        secure: true,
+      }
+    }
   },
   database: drizzleAdapter(db, {
     provider: "pg",
@@ -37,68 +45,33 @@ export const auth = betterAuth({
   hooks: {
     before: async (context: any) => {
       const path = context.path || "";
-      if (path.startsWith("/sign-in")) {
+      if (path.startsWith("/sign-in") || path.startsWith("/sign-up")) {
         const body = context.body || {};
-        console.log(`\n[AUTH_DEBUG] Tentativa de login iniciada:`);
-        console.log(`> E-mail: ${body.email}`);
-        console.log(`> Path: ${path}`);
-
-        // Verificar se o usuário existe no banco
-        if (body.email) {
-          const existingUser = await db
-            .select()
-            .from(schema.user)
-            .where(eq(schema.user.email, body.email))
-            .limit(1);
-
-          if (existingUser.length === 0) {
-            console.warn(`[AUTH_DEBUG] AVISO: Usuário com e-mail ${body.email} NÃO encontrado no banco.`);
-          } else {
-            console.log(`[AUTH_DEBUG] Usuário encontrado no banco. ID: ${existingUser[0].id}`);
-
-            // Verificar se tem conta vinculada
-            const userAccount = await db
-              .select()
-              .from(schema.account)
-              .where(eq(schema.account.userId, existingUser[0].id))
-              .limit(1);
-
-            if (userAccount.length === 0) {
-              console.warn(`[AUTH_DEBUG] AVISO: Usuário encontrado, mas NÃO possui conta vinculada na tabela 'account'.`);
-            } else {
-              console.log(`[AUTH_DEBUG] Conta encontrada para o usuário. Provedor: ${userAccount[0].providerId}`);
-            }
-          }
-        }
+        console.log(`\n[AUTH_DEBUG] Requisição em ${path}:`, body.email || "sem email");
       }
       return;
     },
     after: async (context: any) => {
       const path = context.path || "";
 
-      // No Better-Auth v1 + Elysia, o objeto retornado (user, session, etc) 
-      // fica em context.response ou context.context.returned
-      // Se ambos forem undefined, usamos um objeto vazio como fallback
-      let response = context.response || context.context?.returned;
-
-      // DEBUG LOG
-      if (path.includes("/sign-in") || path.includes("/sign-up")) {
-        console.log(`[AUTH_AFTER_HOOK] Path: ${path}`);
-        console.log(`[AUTH_AFTER_HOOK] Response type: ${typeof response}`);
-        if (response) {
-          console.log(`[AUTH_AFTER_HOOK] Response keys: ${Object.keys(response).join(", ")}`);
-        }
+      // Se for sign-out, retornamos o objeto original para não quebrar os headers de Set-Cookie
+      if (path.includes("/sign-out")) {
+        console.log(`[AUTH_AFTER_HOOK] Processando sign-out`);
+        return context.response;
       }
+
+      // Tenta pegar a resposta do contexto
+      let response = context.response || context.context?.returned;
 
       const isAuthPath =
         path.startsWith("/sign-in") ||
         path.startsWith("/sign-up") ||
         path.startsWith("/get-session");
 
-      // Se não for um path de autenticação que queremos processar, 
-      // ou se não houver resposta para modificar, retorna o que tivermos
+      // Se não for um dos paths que queremos injetar dados ou se não houver resposta
+      // Retornamos a resposta original ou um objeto vazio para evitar crash no Better-Auth
       if (!isAuthPath || !response) {
-        return response || {};
+        return context.response || response || {};
       }
 
       // Se for um erro, não tentamos injetar dados de negócio
@@ -117,6 +90,7 @@ export const auth = betterAuth({
             .limit(1);
 
           if (userBusiness) {
+            console.log(`[AUTH_AFTER_HOOK] Injetando business ${userBusiness.slug} para usuário ${user.id}`);
             // Injeta os dados do negócio no JSON de resposta
             if (response.user) {
               response.user.business = userBusiness;
@@ -126,10 +100,11 @@ export const auth = betterAuth({
               response.session.user.business = userBusiness;
               response.session.user.slug = userBusiness.slug;
             }
+          } else {
+            console.log(`[AUTH_AFTER_HOOK] Nenhum business encontrado para usuário ${user.id}`);
           }
         } catch (dbError) {
           console.error(`[AUTH_AFTER_HOOK] Erro ao buscar business:`, dbError);
-          // Continuamos mesmo se falhar a busca do business
         }
       }
 
