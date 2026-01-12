@@ -51,12 +51,28 @@ export const auth = betterAuth({
       const dbUrl = process.env.DATABASE_URL || "";
 
       console.log(`>>> [CRITICAL_DEBUG] BETTER_AUTH_SECRET (prefixo): ${secret.substring(0, 4)}**** (Tamanho: ${secret.length})`);
-      console.log(`>>> [CRITICAL_DEBUG] DATABASE_URL (destino): ${dbUrl.includes("supabase") ? "SUPABASE DETECTADO" : "OUTRO BANCO"} | Prefixo: ${dbUrl.substring(0, 15)}...`);
 
-      // Log de depuração para tokens recebidos
+      if (dbUrl.includes(".neon.tech")) {
+        console.error(`>>> [ALERTA_BANCO] O Back-end está conectado ao NEON (postgresql://ne...). Se o Front-end estiver no SUPABASE, a autenticação VAI FALHAR.`);
+      } else if (dbUrl.includes("supabase")) {
+        console.log(`>>> [INFO_BANCO] Conectado ao SUPABASE.`);
+      } else {
+        console.log(`>>> [INFO_BANCO] Banco detectado: ${dbUrl.substring(0, 20)}...`);
+      }
+
+      // Teste rápido de existência de tabela no log de get-session
       if (path.includes("/get-session")) {
         const token = authHeader || "AUSENTE";
         console.log(`[AUTH_DEBUG] get-session iniciado - Token bruto: ${token.substring(0, 30)}...`);
+
+        try {
+          // Tenta um count simples na tabela de usuários para ver se o banco responde
+          const userCount = await db.select({ count: schema.user.id }).from(schema.user).limit(1);
+          console.log(`>>> [DATABASE_HEALTH] Conexão OK. Tabela 'user' acessível.`);
+        } catch (dbError: any) {
+          console.error(`>>> [DATABASE_ERROR] Erro ao acessar tabela 'user':`, dbError.message);
+          console.error(`>>> DICA: Verifique se as migrations foram rodadas no banco ${dbUrl.substring(0, 15)}...`);
+        }
 
         if (!authHeader) {
           console.warn(">>> [AUTH_DEBUG] AVISO: Header Authorization está faltando na requisição do Front-end!");
