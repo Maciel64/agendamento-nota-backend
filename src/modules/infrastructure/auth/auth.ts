@@ -7,15 +7,19 @@ import { eq } from "drizzle-orm";
 
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET!,
-  baseURL: process.env.BETTER_AUTH_URL!,
+  // Prioriza a URL do Front (via Proxy) se disponível, para garantir cookies First-Party
+  baseURL: process.env.FRONTEND_URL
+    ? `${process.env.FRONTEND_URL}/api/auth`
+    : (process.env.BETTER_AUTH_URL || "http://localhost:3333/api/auth"),
   trustedOrigins: [
     "https://agendamento-nota-front.vercel.app",
     ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
   ],
   advanced: {
     cookiePrefix: "better-auth",
+    // Desabilitado: o proxy torna a comunicação First-Party
     crossSubDomainCookies: {
-      enabled: true,
+      enabled: false,
     },
     // No Vercel/Produção, useSecureCookies deve ser true para permitir SameSite=None
     useSecureCookies: true,
