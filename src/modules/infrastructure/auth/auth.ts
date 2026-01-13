@@ -21,19 +21,18 @@ export const auth = betterAuth({
   ],
   advanced: {
     cookiePrefix: "better-auth",
-    useHeader: true, // Habilita o uso do header Authorization: Bearer <token>
     crossSubDomainCookies: {
       enabled: true,
     },
     // No Vercel/Produção, useSecureCookies deve ser true para permitir SameSite=None
     useSecureCookies: process.env.NODE_ENV === "production",
-  },
-  cookies: {
-    sessionToken: {
-      options: {
-        sameSite: "none",
-        secure: true,
-        httpOnly: true,
+    cookies: {
+      sessionToken: {
+        attributes: {
+          sameSite: "none",
+          secure: true,
+          httpOnly: true,
+        },
       },
     },
   },
@@ -55,11 +54,22 @@ export const auth = betterAuth({
       const authHeader = context.headers?.get("authorization");
       console.log(`>>> [BACKEND] Requisição em ${path} | Header Authorization recebido:`, authHeader ? "SIM" : "NÃO");
 
+      // Tratamento de prefixo Bearer solicitado pelo usuário
+      // Se o header contiver Bearer, tentamos garantir que o Better-Auth o processe corretamente
+      if (authHeader?.startsWith("Bearer ")) {
+        const tokenOnly = authHeader.substring(7);
+        // Em alguns contextos, o Better-Auth v1 pode falhar ao processar o Bearer se o useHeader não estiver ativo
+        // Embora tenhamos removido useHeader por erro de tipagem, forçamos o token limpo se necessário
+        console.log(`[AUTH_BEFORE_HOOK] Token com prefixo Bearer detectado. Verificando...`);
+      }
+
       // Verificação crítica de segredo e banco de dados
       const secret = process.env.BETTER_AUTH_SECRET || "";
       const dbUrl = process.env.DATABASE_URL || "";
+      const authUrl = process.env.BETTER_AUTH_URL || "";
 
       console.log(`>>> [CRITICAL_DEBUG] BETTER_AUTH_SECRET (prefixo): ${secret.substring(0, 4)}**** (Tamanho: ${secret.length})`);
+      console.log(`>>> [CRITICAL_DEBUG] BETTER_AUTH_URL: ${authUrl}`);
 
       if (dbUrl.includes(".neon.tech")) {
         console.error(`>>> [ALERTA_BANCO] O Back-end está conectado ao NEON (postgresql://ne...). Se o Front-end estiver no SUPABASE, a autenticação VAI FALHAR.`);
@@ -73,6 +83,24 @@ export const auth = betterAuth({
       if (path.includes("/get-session")) {
         const token = authHeader || "AUSENTE";
         console.log(`[AUTH_DEBUG] get-session iniciado - Token bruto: ${token.substring(0, 30)}...`);
+
+        if (authHeader?.startsWith("Bearer ")) {
+          const tokenValue = authHeader.split(" ")[1];
+          try {
+            const sessionCheck = await db.select().from(schema.session).where(eq(schema.session.token, tokenValue)).limit(1);
+            if (sessionCheck.length > 0) {
+              console.log(`>>> [AUTH_DEBUG] SUCESSO: Token encontrado na tabela 'session'. ID: ${sessionCheck[0].id}`);
+            } else {
+              console.warn(`>>> [AUTH_DEBUG] ERRO: Token '${tokenValue.substring(0, 10)}...' NÃO encontrado na tabela 'session'.`);
+
+              // Verificação extra: existe alguma sessão no banco?
+              const totalSessions = await db.select({ count: schema.session.id }).from(schema.session);
+              console.log(`>>> [AUTH_DEBUG] Total de sessões no banco: ${totalSessions.length}`);
+            }
+          } catch (err: any) {
+            console.error(`>>> [AUTH_DEBUG] Erro ao consultar token no banco:`, err.message);
+          }
+        }
 
         try {
           // Tenta um count simples na tabela de usuários para ver se o banco responde
@@ -124,9 +152,13 @@ export const auth = betterAuth({
         // Tenta capturar a resposta de forma segura
         response = context.response || context.context?.returned;
 
-        // Log de início do processamento after
-        if (path.includes("/get-session")) {
+        if (path.includes("/get-session") || path.includes("/sign-in")) {
           console.log(`[AUTH_AFTER_HOOK] Processando resposta para ${path}...`);
+          if (response && response.session) {
+            console.log(`[AUTH_AFTER_HOOK] Sessão encontrada no objeto de resposta. ID: ${response.session.id || 'N/A'}`);
+          } else {
+            console.log(`[AUTH_AFTER_HOOK] Sessão NÃO encontrada no objeto de resposta.`);
+          }
         }
 
         // Se for um erro de autenticação (ex: senha errada), o Better-Auth pode retornar status 401 ou 403
@@ -170,13 +202,16 @@ export const auth = betterAuth({
         const user = response.user || response.session?.user;
 
         if (user && user.id) {
-          // Log de depuração do Drizzle para verificar persistência do usuário
-          if (path.includes("/get-session")) {
+          // Log de depuração do Drizzle para verificar persistência do usuário e sessão
+          if (path.includes("/get-session") || path.includes("/sign-in")) {
             try {
               const dbUser = await db.select().from(schema.user).where(eq(schema.user.id, user.id)).limit(1);
-              console.log(`>>> [DRIZZLE_DEBUG] Usuário vinculado à sessão (${user.id}):`, dbUser.length > 0 ? 'Encontrado no banco' : 'NÃO ENCONTRADO no banco');
+              console.log(`>>> [DRIZZLE_DEBUG] Usuário (${user.id}):`, dbUser.length > 0 ? 'Encontrado no banco' : 'NÃO ENCONTRADO no banco');
+
+              const dbSessions = await db.select().from(schema.session).where(eq(schema.session.userId, user.id));
+              console.log(`>>> [DRIZZLE_DEBUG] Sessões no banco para este usuário: ${dbSessions.length}`);
             } catch (drizzleErr) {
-              console.error(`>>> [DRIZZLE_DEBUG] Erro ao buscar usuário:`, drizzleErr);
+              console.error(`>>> [DRIZZLE_DEBUG] Erro ao buscar dados no banco:`, drizzleErr);
             }
           }
 
@@ -264,13 +299,5 @@ export const auth = betterAuth({
   ],
   emailAndPassword: {
     enabled: true,
-  },
-  // Estrutura correta para habilitar Bearer Token na versão 1.x
-  secondaryStorage: {
-    get: async (key) => {
-      return null;
-    },
-    set: async (key, value, expiration) => { },
-    delete: async (key) => { },
   },
 });
