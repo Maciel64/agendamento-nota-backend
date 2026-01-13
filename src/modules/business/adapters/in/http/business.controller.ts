@@ -1,11 +1,13 @@
 import { Elysia, t } from "elysia";
 import { authPlugin } from "../../../../infrastructure/auth/auth-plugin";
+import { repositoriesPlugin } from "../../../../infrastructure/di/repositories.plugin";
 import { ListMyBusinessesUseCase } from "../../../application/use-cases/list-my-businesses.use-case";
 import { CreateBusinessUseCase } from "../../../application/use-cases/create-business.use-case";
 import { UpdateBusinessConfigUseCase } from "../../../application/use-cases/update-business-config.use-case";
 import { createBusinessDTO, updateBusinessConfigDTO } from "../dtos/business.dto";
 
 export const businessController = new Elysia({ prefix: "/api/business" })
+  .use(repositoriesPlugin)
   .use(authPlugin)
   .onBeforeHandle(({ user, set }) => {
     if (!user) {

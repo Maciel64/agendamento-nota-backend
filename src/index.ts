@@ -19,7 +19,6 @@ const listUsersUseCase = new ListUsersUseCase(userRepository);
 const userController = new UserController(createUserUseCase, listUsersUseCase);
 
 const app = new Elysia()
-  .use(repositoriesPlugin)
   .use(
     cors({
       origin: [
