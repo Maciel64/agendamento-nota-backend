@@ -13,6 +13,7 @@ export const auth = betterAuth({
     : (process.env.BETTER_AUTH_URL || "http://localhost:3333/api/auth"),
   trustedOrigins: [
     "https://agendamento-nota-front.vercel.app",
+    "https://landingpage-agendamento-front.vercel.app",
     ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
   ],
   advanced: {

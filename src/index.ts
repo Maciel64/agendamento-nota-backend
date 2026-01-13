@@ -22,6 +22,7 @@ const app = new Elysia()
     cors({
       origin: [
         "https://agendamento-nota-front.vercel.app",
+        "https://landingpage-agendamento-front.vercel.app",
         ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
       ],
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
