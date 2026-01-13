@@ -8,24 +8,14 @@ import { eq } from "drizzle-orm";
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET!,
   baseURL: process.env.BETTER_AUTH_URL!,
-  trustedOrigins: [
-    "https://agendamento-nota-front.vercel.app",
-    "http://localhost:3000",
-    "http://localhost:3002",
-    "http://lucas-studio.localhost:3000",
-    "http://*.localhost:3000",
-    "https://agendamento-nota-backend.vercel.app",
-    "https://*.vercel.app",
-    ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
-    ...(process.env.PLATFORM_URL ? [process.env.PLATFORM_URL] : []),
-  ],
+  trustedOrigins: ["https://agendamento-nota-front.vercel.app"],
   advanced: {
     cookiePrefix: "better-auth",
     crossSubDomainCookies: {
       enabled: true,
     },
     // No Vercel/Produção, useSecureCookies deve ser true para permitir SameSite=None
-    useSecureCookies: process.env.NODE_ENV === "production",
+    useSecureCookies: true,
     cookies: {
       sessionToken: {
         attributes: {
@@ -58,7 +48,6 @@ export const auth = betterAuth({
 
       // Verificação crítica de segredo e banco de dados
       const secret = process.env.BETTER_AUTH_SECRET || "";
-      const dbUrl = process.env.DATABASE_URL || "";
       const authUrl = process.env.BETTER_AUTH_URL || "";
 
       if (path.includes("/get-session") || path.includes("/sign-in")) {
