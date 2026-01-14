@@ -105,55 +105,43 @@ export const accountRelations = relations(account, ({ one }) => ({
   }),
 }));
 
-export const appointment = pgTable("appointment", {
-  id: text("id").primaryKey(),
-  title: text("title").notNull(),
-  description: text("description"),
-  date: timestamp("date").notNull(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at")
-    .defaultNow()
-    .$onUpdate(() => new Date())
-    .notNull(),
-});
-
-export const report = pgTable("report", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  data: text("data").notNull(), // Pode ser um JSON stringificado
-  userId: text("user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export const appointmentRelations = relations(appointment, ({ one }) => ({
-  user: one(user, {
-    fields: [appointment.userId],
-    references: [user.id],
-  }),
-}));
-
-export const reportRelations = relations(report, ({ one }) => ({
-  user: one(user, {
-    fields: [report.userId],
-    references: [user.id],
-  }),
-}));
-
-export const business = pgTable("business", {
+export const companies = pgTable("companies", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
-  config: jsonb("config").notNull().default({
-    hero: { title: "Novo Site" },
-    theme: { primaryColor: "#000" },
-    services: [],
-  }),
-  userId: text("user_id")
+  address: text("address"),
+  contact: text("contact"),
+  siteCustomization: jsonb("site_customization").default({
+    layout_global: {
+      header: {},
+      footer: {},
+      typography: {},
+      base_colors: {},
+    },
+    home: {
+      hero_banner: {},
+      services_section: {},
+      contact_section: {},
+    },
+    gallery: {
+      grid_config: {},
+      interactivity: {},
+    },
+    about_us: {
+      about_banner: {},
+      our_story: {},
+      our_values: [],
+      our_team: [],
+      testimonials: [],
+    },
+    appointment_flow: {
+      step_1_services: {},
+      step_2_date: {},
+      step_3_time: {},
+      step_4_confirmation: {},
+    },
+  }).notNull(),
+  ownerId: text("owner_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -163,9 +151,218 @@ export const business = pgTable("business", {
     .notNull(),
 });
 
-export const businessRelations = relations(business, ({ one }) => ({
-  user: one(user, {
-    fields: [business.userId],
+export const services = pgTable("services", {
+  id: text("id").primaryKey(),
+  companyId: text("company_id")
+    .notNull()
+    .references(() => companies.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  description: text("description"),
+  price: text("price").notNull(),
+  duration: text("duration").notNull(),
+  icon: text("icon"),
+  isVisible: boolean("is_visible").default(true).notNull(),
+  advancedRules: jsonb("advanced_rules").default({
+    conflicts: [], // IDs de serviços que não podem ser feitos junto
+  }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+export const appointments = pgTable("appointments", {
+  id: text("id").primaryKey(),
+  companyId: text("company_id")
+    .notNull()
+    .references(() => companies.id, { onDelete: "cascade" }),
+  serviceId: text("service_id")
+    .notNull()
+    .references(() => services.id, { onDelete: "cascade" }),
+  customerId: text("customer_id").references(() => user.id, { onDelete: "set null" }),
+  customerName: text("customer_name").notNull(),
+  customerEmail: text("customer_email").notNull(),
+  customerPhone: text("customer_phone").notNull(),
+  // Snapshot do serviço no momento do agendamento
+  serviceNameSnapshot: text("service_name_snapshot").notNull(),
+  servicePriceSnapshot: text("service_price_snapshot").notNull(),
+  serviceDurationSnapshot: text("service_duration_snapshot").notNull(),
+  scheduledAt: timestamp("scheduled_at").notNull(),
+  status: text("status", { enum: ["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED", "POSTPONED"] })
+    .default("PENDING")
+    .notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+export const agendaBlocks = pgTable("agenda_blocks", {
+  id: text("id").primaryKey(),
+  companyId: text("company_id")
+    .notNull()
+    .references(() => companies.id, { onDelete: "cascade" }),
+  startDate: text("start_date").notNull(), // dd/mm/aaaa
+  endDate: text("end_date").notNull(),
+  startTime: text("start_time"), // HH:mm
+  endTime: text("end_time"),
+  reason: text("reason"),
+  type: text("type", { enum: ["BLOCK_HOUR", "BLOCK_DAY", "BLOCK_PERIOD"] }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+export const serviceResources = pgTable("service_resources", {
+  id: text("id").primaryKey(),
+  serviceId: text("service_id")
+    .notNull()
+    .references(() => services.id, { onDelete: "cascade" }),
+  inventoryId: text("inventory_id")
+    .notNull()
+    .references(() => inventory.id, { onDelete: "cascade" }),
+  consumptionUnit: text("consumption_unit").notNull(),
+  conversionFactor: text("conversion_factor").notNull(),
+  purchaseUnit: text("purchase_unit").notNull(),
+  consumedQuantity: text("consumed_quantity").notNull(),
+  outputFactor: text("output_factor").notNull(),
+  trigger: text("trigger").default("UPON_COMPLETION").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+export const googleCalendarConfigs = pgTable("google_calendar_configs", {
+  id: text("id").primaryKey(),
+  companyId: text("company_id")
+    .notNull()
+    .references(() => companies.id, { onDelete: "cascade" }),
+  icalUrl: text("ical_url"),
+  syncStatus: text("sync_status").default("INACTIVE").notNull(),
+  lastSyncedAt: timestamp("last_synced_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+export const operatingHours = pgTable("operating_hours", {
+  id: text("id").primaryKey(),
+  companyId: text("company_id")
+    .notNull()
+    .references(() => companies.id, { onDelete: "cascade" }),
+  dayOfWeek: text("day_of_week").notNull(), // 0-6
+  status: text("status").notNull(), // "OPEN", "CLOSED"
+  morningStart: text("morning_start"),
+  morningEnd: text("morning_end"),
+  afternoonStart: text("afternoon_start"),
+  afternoonEnd: text("afternoon_end"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+export const inventory = pgTable("inventory", {
+  id: text("id").primaryKey(),
+  companyId: text("company_id")
+    .notNull()
+    .references(() => companies.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  description: text("description"),
+  quantity: text("quantity").notNull(),
+  unit: text("unit").notNull(), // Ex: "Grama", "Unidade"
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+export const companiesRelations = relations(companies, ({ one, many }) => ({
+  owner: one(user, {
+    fields: [companies.ownerId],
+    references: [user.id],
+  }),
+  services: many(services),
+  appointments: many(appointments),
+  operatingHours: many(operatingHours),
+  agendaBlocks: many(agendaBlocks),
+  googleCalendarConfigs: many(googleCalendarConfigs),
+  inventory: many(inventory),
+}));
+
+export const servicesRelations = relations(services, ({ one, many }) => ({
+  company: one(companies, {
+    fields: [services.companyId],
+    references: [companies.id],
+  }),
+  appointments: many(appointments),
+  resources: many(serviceResources),
+}));
+
+export const serviceResourcesRelations = relations(serviceResources, ({ one }) => ({
+  service: one(services, {
+    fields: [serviceResources.serviceId],
+    references: [services.id],
+  }),
+  inventory: one(inventory, {
+    fields: [serviceResources.inventoryId],
+    references: [inventory.id],
+  }),
+}));
+
+export const agendaBlocksRelations = relations(agendaBlocks, ({ one }) => ({
+  company: one(companies, {
+    fields: [agendaBlocks.companyId],
+    references: [companies.id],
+  }),
+}));
+
+export const appointmentsRelations = relations(appointments, ({ one }) => ({
+  company: one(companies, {
+    fields: [appointments.companyId],
+    references: [companies.id],
+  }),
+  service: one(services, {
+    fields: [appointments.serviceId],
+    references: [services.id],
+  }),
+  customer: one(user, {
+    fields: [appointments.customerId],
     references: [user.id],
   }),
 }));
+
+export const googleCalendarConfigsRelations = relations(googleCalendarConfigs, ({ one }) => ({
+  company: one(companies, {
+    fields: [googleCalendarConfigs.companyId],
+    references: [companies.id],
+  }),
+}));
+
+export const operatingHoursRelations = relations(operatingHours, ({ one }) => ({
+  company: one(companies, {
+    fields: [operatingHours.companyId],
+    references: [companies.id],
+  }),
+}));
+
+export const inventoryRelations = relations(inventory, ({ one }) => ({
+  company: one(companies, {
+    fields: [inventory.companyId],
+    references: [companies.id],
+  }),
+}));
+
+
+

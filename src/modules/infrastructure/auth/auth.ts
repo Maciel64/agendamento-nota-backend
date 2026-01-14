@@ -116,30 +116,30 @@ export const auth = betterAuth({
 
         if (user && user.id) {
           try {
-            const [userBusiness] = await db
+            const [userCompany] = await db
               .select()
-              .from(schema.business)
-              .where(eq(schema.business.userId, user.id))
+              .from(schema.companies)
+              .where(eq(schema.companies.ownerId, user.id))
               .limit(1);
 
-            if (userBusiness) {
-              const businessData = {
-                ...userBusiness,
-                slug: userBusiness.slug
+            if (userCompany) {
+              const companyData = {
+                ...userCompany,
+                slug: userCompany.slug
               };
 
               // Modifica o objeto response diretamente (se for um objeto plano)
               if (response.user) {
-                response.user.business = businessData;
-                response.user.slug = userBusiness.slug;
+                response.user.business = companyData;
+                response.user.slug = userCompany.slug;
               }
               if (response.session && response.session.user) {
-                response.session.user.business = businessData;
-                response.session.user.slug = userBusiness.slug;
+                response.session.user.business = companyData;
+                response.session.user.slug = userCompany.slug;
               }
             }
           } catch (dbError) {
-            console.error(`[AUTH_AFTER_HOOK] Erro ao buscar business:`, dbError);
+            console.error(`[AUTH_AFTER_HOOK] Erro ao buscar company:`, dbError);
           }
         }
 
@@ -174,15 +174,15 @@ export const auth = betterAuth({
             if (!session) return ctx.json({ business: null, slug: null });
 
             const userId = session.user.id;
-            const [userBusiness] = await db
+            const [userCompany] = await db
               .select()
-              .from(schema.business)
-              .where(eq(schema.business.userId, userId))
+              .from(schema.companies)
+              .where(eq(schema.companies.ownerId, userId))
               .limit(1);
 
             return ctx.json({
-              business: userBusiness || null,
-              slug: userBusiness?.slug || null,
+              business: userCompany || null,
+              slug: userCompany?.slug || null,
             });
           }
         ),

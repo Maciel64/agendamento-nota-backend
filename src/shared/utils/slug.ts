@@ -1,5 +1,5 @@
 import { db } from "../../modules/infrastructure/drizzle/database";
-import { business } from "../../db/schema";
+import { companies } from "../../db/schema";
 import { eq } from "drizzle-orm";
 
 export function createSlug(text: string): string {
@@ -22,8 +22,8 @@ export async function generateUniqueSlug(name: string): Promise<string> {
   while (true) {
     const existing = await db
       .select()
-      .from(business)
-      .where(eq(business.slug, slug))
+      .from(companies)
+      .where(eq(companies.slug, slug))
       .limit(1);
 
     if (existing.length === 0) {

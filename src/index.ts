@@ -36,8 +36,8 @@ const app = new Elysia()
   .mount(auth.handler)
   .use(publicBusinessController)
   .use(userController.registerRoutes())
-  .use(appointmentController)
-  .use(reportController)
+  // .use(appointmentController)
+  // .use(reportController)
   .use(businessController)
   .onError(({ code, error, set }) => {
     console.error(`\n[ERROR] ${code}:`, error);

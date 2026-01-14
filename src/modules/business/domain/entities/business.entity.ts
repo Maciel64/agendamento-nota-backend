@@ -2,8 +2,8 @@ export type Business = {
   id: string;
   name: string;
   slug: string;
-  config: any;
-  userId: string;
+  siteCustomization: any;
+  ownerId: string;
   createdAt: Date;
   updatedAt?: Date;
 };
@@ -12,7 +12,7 @@ export type BusinessSummary = {
   id: string;
   name: string;
   slug: string;
-  config: any;
+  siteCustomization: any;
   createdAt: Date;
 };
 
@@ -20,6 +20,6 @@ export type CreateBusinessInput = {
   id: string;
   name: string;
   slug: string;
-  userId: string;
-  config: any;
+  ownerId: string;
+  siteCustomization: any;
 };

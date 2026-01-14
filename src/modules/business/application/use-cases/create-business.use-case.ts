@@ -2,7 +2,7 @@ import { IBusinessRepository } from "../../domain/ports/business.repository";
 import { CreateBusinessDTO } from "../../adapters/in/dtos/business.dto";
 
 export class CreateBusinessUseCase {
-  constructor(private businessRepository: IBusinessRepository) {}
+  constructor(private businessRepository: IBusinessRepository) { }
 
   async execute(userId: string, data: CreateBusinessDTO) {
     const existingBusiness = await this.businessRepository.findBySlug(data.slug);
@@ -15,8 +15,8 @@ export class CreateBusinessUseCase {
       id: crypto.randomUUID(),
       name: data.name,
       slug: data.slug,
-      userId: userId,
-      config: {
+      ownerId: userId,
+      siteCustomization: {
         hero: { title: "Novo Site" },
         theme: { primaryColor: "#000" },
         services: [],

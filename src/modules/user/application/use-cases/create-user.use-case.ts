@@ -3,7 +3,7 @@ import { UserRepository } from "../../adapters/out/user.repository";
 import { UserAlreadyExistsError } from "../../domain/error/user-already-exists.error";
 import { auth } from "../../../infrastructure/auth/auth";
 import { db } from "../../../infrastructure/drizzle/database";
-import { business } from "../../../../db/schema";
+import { companies, account } from "../../../../db/schema";
 import { generateUniqueSlug } from "../../../../shared/utils/slug";
 import { eq } from "drizzle-orm";
 
@@ -13,42 +13,55 @@ export class CreateUserUseCase {
     const alreadyExists = await this.userRepository.findByEmail(data.email);
 
     if (alreadyExists) {
-      // Verificar se o usuário já tem um business
-      const userBusiness = await db
+      const userCompany = await db
         .select()
-        .from(business)
-        .where(eq(business.userId, alreadyExists.id))
+        .from(companies)
+        .where(eq(companies.ownerId, alreadyExists.id))
         .limit(1);
 
-      if (userBusiness.length > 0) {
+      if (userCompany.length > 0) {
         return {
           user: alreadyExists,
           session: null,
-          business: userBusiness[0],
-          slug: userBusiness[0].slug
+          business: userCompany[0],
+          slug: userCompany[0].slug
         };
       }
 
-      // Se o usuário existe mas não tem business, vamos apenas criar o business e studio para ele
       const slug = await generateUniqueSlug(data.studioName);
-
-      const [newBusiness] = await db.insert(business).values({
-        id: crypto.randomUUID(),
-        name: data.studioName,
-        slug: slug,
-        userId: alreadyExists.id,
-        config: {
-          hero: { title: "Novo Site" },
-          theme: { primaryColor: "#000" },
-          services: [],
-        },
-      }).returning();
+      const result = await db.transaction(async (tx) => {
+        const [newCompany] = await tx.insert(companies).values({
+          id: crypto.randomUUID(),
+          name: data.studioName,
+          slug,
+          ownerId: alreadyExists.id,
+        }).returning();
+        await tx.update(account).set({ scope: "ADMIN" }).where(eq(account.userId, alreadyExists.id));
+        return { newCompany, slug };
+      }).catch(async (err) => {
+        const code = (err as any)?.code || (err as any)?.cause?.code;
+        if (code === "23505") {
+          const fallbackSlug = await generateUniqueSlug(`${data.studioName}-${Date.now()}`);
+          const result = await db.transaction(async (tx) => {
+            const [newCompany] = await tx.insert(companies).values({
+              id: crypto.randomUUID(),
+              name: data.studioName,
+              slug: fallbackSlug,
+              ownerId: alreadyExists.id,
+            }).returning();
+            await tx.update(account).set({ scope: "ADMIN" }).where(eq(account.userId, alreadyExists.id));
+            return { newCompany, slug: fallbackSlug };
+          });
+          return result;
+        }
+        throw err;
+      });
 
       return {
         user: alreadyExists,
         session: null,
-        business: newBusiness,
-        slug: slug
+        business: result.newCompany,
+        slug: result.slug
       };
     }
 
@@ -68,23 +81,34 @@ export class CreateUserUseCase {
     console.log(`[USER_REGISTER_USE_CASE] signUpEmail concluído com sucesso para: ${response.user.email}`);
 
     const slug = await generateUniqueSlug(data.studioName);
-
-    const [newBusiness] = await db.insert(business).values({
-      id: crypto.randomUUID(),
-      name: data.studioName,
-      slug: slug,
-      userId: response.user.id,
-      config: {
-        hero: { title: "Novo Site" },
-        theme: { primaryColor: "#000" },
-        services: [],
-      },
-    }).returning();
+    const { newCompany, finalSlug } = await db.transaction(async (tx) => {
+      await tx.update(account).set({ scope: "ADMIN" }).where(eq(account.userId, response.user.id));
+      const [created] = await tx.insert(companies).values({
+        id: crypto.randomUUID(),
+        name: data.studioName,
+        slug,
+        ownerId: response.user.id,
+      }).returning();
+      return { newCompany: created, finalSlug: slug };
+    }).catch(async (err) => {
+      const code = (err as any)?.code || (err as any)?.cause?.code;
+      if (code === "23505") {
+        const fallbackSlug = await generateUniqueSlug(`${data.studioName}-${Date.now()}`);
+        const [created] = await db.insert(companies).values({
+          id: crypto.randomUUID(),
+          name: data.studioName,
+          slug: fallbackSlug,
+          ownerId: response.user.id,
+        }).returning();
+        return { newCompany: created, finalSlug: fallbackSlug };
+      }
+      throw err;
+    });
 
     return {
       ...response,
-      business: newBusiness,
-      slug: slug
+      business: newCompany,
+      slug: finalSlug
     };
   }
 }

@@ -1,0 +1,868 @@
+================================VISÃO RESUMIDA========================
+
+├── 📂 USUARIOS (dados do cliente)
+├── 📂 PEMPRESAS (tudo relacionado as empresas)
+    ├── 📂 AGENDAMENTOS 
+    ├── 📂 DADOS DA EMPRESA 
+    ├── 📂 SERVIÇOS 
+    ├── 📂 GOOGLE CALENDAR 
+    ├── 📂 HORÁRIOS 
+    ├── 📂 ESTOQUE 
+    ├── 📂 PERSONALIZACAO_SITE 
+    │   │
+    │   ├── 📂 LAYOUT_GLOBAL (Cabeçalho, Rodapé, Tipografia, Cores Base))
+    │   │   ├── 📂 CABECALHO (Cards de serviços da Home)
+    │   │   └── 📂 RODAPE 
+    │   │   └── 📂 TIPOGRAFIA 
+    │   │   └── 📂 CORES BASE (Cores base do site)
+    │   ├── 📂 PAGINA_HOME
+    │   │   ├── 📂 HERO_BANNER (Título, Subtítulo, Botões, Background)
+    │   │   ├── 📂 SECAO_SERVICOS (Cards de serviços da Home)
+    │   │   └── 📂 SECAO_CONTATO_HOME (Resumo de contato)
+    │   │
+    │   ├── 📂 PAGINA_GALERIA
+    │   │   ├── 📂 CONFIG_GRID (Colunas, Espaçamento, Arredondamento)
+    │   │   └── 📂 INTERATIVIDADE (Lightbox e Zoom)
+    │   │
+    │   ├── 📂 PAGINA_SOBRE_NOS
+    │   │   ├── 📂 BANNER_SOBRE (Tag, Ícone, Título, Background/Cor Sólida)
+    │   │   ├── 📂 NOSSA_HISTORIA (Texto + Imagem Lateral, Disposição)
+    │   │   ├── 📂 NOSSOS_VALORES (Lista Dinâmica, Ícones, Layout Grid)
+    │   │   ├── 📂 NOSSA_EQUIPE (Cards de Profissionais, Fotos, Redes Sociais)
+    │   │   └── 📂 DEPOIMENTOS (Avaliações Salvas, Estrelas, Carrossel)
+    │   │
+    │   └── 📂 PAGINA_AGENDAMENTO (Fluxo de 4 Passos)
+    │       ├── 📂 PASSO_1_SERVICOS (Categorias, Preços, Cards)
+    │       ├── 📂 PASSO_2_DATA (Calendário, Estados: Disponível/Selecionado)
+    │       ├── 📂 PASSO_3_HORARIO (Grade de Horas, Slots, Destaque)
+    │       └── 📂 PASSO_4_CONFIRMACAO (Formulário, Inputs, Resumo, Botão Final)
+
+========================================VISÃO EXPANDIDA============================================
+
+C:/BANCO_DE_DADOS (Database) Modelagem
+│
+└── - 📂 USUARIOS (Tabela: users)
+│       └── - 📁 [ID_TEXTO] (Ex: HVx7qsJgq7...)
+│       │
+│       ├── 📄 IDENTIDADE_E_PERFIL
+│       │   ├── 🆔 id: "HVx7qsJgq7..." (Tipo: Text/UUID)
+│       │   ├── 👤 name: "Lucas Sá"
+│       │   ├── 📧 email: "lucassa1324@gmail.com"
+│       │   ├── 🔗 image: [URL_DA_FOTO] (Atualmente NULL)
+│       │   └── 🛡️ email_verified: False (Boolean)
+│       │
+│       ├── 📅 CONTROLE_DE_TEMPO
+│       │   ├── ⏳ created_at: "2026-01-10 19:32:42"
+│       │   └── 🔄 updated_at: "2026-01-10 19:32:42"
+│       │
+│       └── 🔗 RELACIONAMENTOS (As conexões que o banco gerencia)
+│           ├── 🔑 accounts (Tokens de acesso/Login social)
+│           ├── 📅 appointments (Lista de agendamentos deste usuário)
+│           ├── 🏢 businesses (As empresas que este usuário possui/gerencia)
+│           ├── 📊 reports (Relatórios vinculados)
+│           └── 🔑 sessions (Sessões ativas no navegador)
+
+└── 📂 EMPRESAS (Tabela: companies)
+    └── 📁 ID_BARBEARIA_LUCAS
+        └── 📂 AGENDAMENTOS (Tabela: appointments)
+            └── 📄 ID_AGENDAMENTO_01 (O arquivo que representa o card do print)
+            |    ├── 🆔 ID: (Chave Primária - UUID)
+            |    ├── 🏢 Company_ID: (Link com a Empresa - Foreign Key)
+            |    │
+            |    ├── 👤 CLIENTE (Informações do solicitante)
+            |    │   ├── 🆔 Client_ID: (Link com a tabela Users se ele for cadastrado)
+            |    │   ├── 📛 Nome: "Lucas Sá" (Conforme o print)
+            |    │   ├── 📧 Email: "lucassa1324@gmail.com" (Conforme o print)
+            |    │   └── 📞 Telefone: "83981448111" (Conforme o print)
+            |    │
+            |    ├── ✂️ SERVIÇO (O que será feito)
+            |    │   ├── 🆔 Service_ID: (Link com a pasta SERVICOS)
+            |    │   ├── 📛 Nome: "Design de Sobrancelhas" (Conforme o print)
+            |    │   ├── ⏱️ Duração: 45 min (Conforme o print)
+            |    │   └── 💰 Valor: 80.00 (Conforme o print)
+            |    │
+            |    ├── 📅 CALENDÁRIO (Quando será feito)
+            |    │   ├── 📆 Data: 24 de Janeiro (Conforme o print)
+            |    │   └── 🕒 Horário: 13:00 (Conforme o print)
+            |    │
+            |    ├── ⚙️ STATUS (A fase atual do atendimento - Os botões coloridos do print)
+            |    │   └── 🏷️ Estado: [PENDENTE, CONFIRMADO, CONCLUIDO, CANCELADO, ADIADO]
+            |    │
+            |    └── 📝 METADADOS (Notas internas)
+            |         └── 📄 Observação: "[status: pendente] Agendamento criado automaticamente..."
+            |
+            📂 SERVICOS (Tabela: services)
+            └── 📁 [ID_DO_SERVICO] (Ex: Design de Sobrancelhas)
+            |    │
+            |    ├── 📄 DADOS_PRINCIPAIS (image_9cb0a7.png)
+            |    │   ├── 📛 Nome: "Design de Sobrancelhas"
+            |    │   ├── 📝 Descrição: "Modelagem personalizada que valoriza o olhar..."	
+            |    │   ├── 💰 Preço: 80.00
+            |    │   ├── ⏱️ Duração: 45 (em minutos)
+            |    │   ├── 🎨 Icone: "sparkles" (ou o código do ícone escolhido)
+            |    │   └── 🏠 Visibilidade: True (Mostrar na página inicial?)
+            |    │
+            |    ├── 📂 REGRAS_AVANCADAS (image_9cb0a7.png)
+            |    │   └── 🚫 Conflitos: [Lista de IDs de outros serviços que não podem ser feitos junto]
+            |    │
+            |    └── 📂 CONSUMO_DE_ESTOQUE (Tabela: service_resources) (image_d4fbe7.png)
+            |
+            |    └── 📁 [ID_VINCULO_PRODUTO] (Ex: Algodão)
+            |                ├── 🆔 Product_ID: [Link para ID_ALGODAO na pasta Estoque]
+            |                │
+            |                ├── - ⚖️ CONFIGURACAO_UNIDADE (image_d4fb8f.png)
+            |                ├── 📏 Unidade_Consumo: "Grama (g)"
+            |                │   ├── 🔢 Fator_Conversao: 500 (Ex: 1 pacote tem 500g)
+            |                │   └── 🏷️ Unidade_Compra: "Pacote (unid)"
+            |                │
+            |                └── - 📉 REGRA_DE_BAIXA (image_d4f4c6.png)
+            |                    ├── 🔢 Qtd_Consumida: 1 (g)
+            |                    ├── 📉 Fator_Saida: 0.002 (A conta que o banco faz: 1 / 500)
+            |                    └── ⚡ Gatilho: "Baixar ao concluir agendamento"
+            |        
+            📂 HORARIOS_DE_FUNCIONAMENTO (Tabela: business_hours)
+            └── 📁 [ID_DA_EMPRESA]
+            |    │
+            |    ├── 📄 REGRAS_POR_DIA (image_d50e52.png)
+            |    │   ├── 🗓️ Dia_da_Semana: [Domingo a Sábado]
+            |    │   ├── 🔓 Status: "Aberto" ou "Fechado" (Interruptor)
+            |    │   │
+            |    │   ├── 🌅 TURNO_MANHA
+            |    │   │   ├── 🕒 Abertura: 07:00 (Ex: Sexta-feira)
+            |    │   │   └── 🕒 Inicio_Almoco: 12:00
+            |    │   │
+            |    │   └── 🌇 TURNO_TARDE
+            |    │       ├── 🕒 Fim_Almoco: 13:00
+            |    │       └── 🕒 Fechamento: 18:00 (Ex: Sexta-feira)
+            |    │
+            |    └── 📂 BLOQUEIOS_DE_AGENDA (Tabela: agenda_blocks) (image_d50e52.png)
+            |         └── 📁 [ID_DO_BLOQUEIO] (Ex: Feriado ou Férias)
+            |              ├── 📅 DATA_INICIAL: "dd/mm/aaaa"
+            |              ├── 📅 DATA_FINAL: "dd/mm/aaaa" (Para períodos longos)
+            |              ├── 🕒 HORA_INICIO: "HH:mm" (Opcional - para bloqueios parciais)
+            |              ├── 🕒 HORA_FIM: "HH:mm" (Opcional)
+            |              ├── 📝 MOTIVO: "Ex: Feriado, Consulta Médica, Férias"
+            |              └── ⚡ TIPO_BLOQUEIO: [Bloquear Horário, Bloquear Dia, Bloquear Período]
+            |    
+            📂 DADOS_DA_EMPRESA (image_e0dd13.png)
+             └── 📁 [ID_DA_EMPRESA]
+            │     │
+            │     ├── 📄 INFORMACOES_BASICAS
+            │     ├── 📛 Nome_do_Site: "Brow Studio"
+            │     │   ├── 🏷️ Sufixo_Titulo: "Agendamento Online" (Aba do navegador)
+            │     │   └── 📝 Descricao: "Especialistas em design de sobrancelhas..."
+            │     │
+            │     ├── 📂 REDES_SOCIAIS (Status + Usuario/Link)
+            │     │   ├── 📸 Instagram: { ativo: True, handle: "@browstudio" }
+            │     │   ├── 💬 WhatsApp: { ativo: True, numero: "5511999999999" }
+            │     │   ├── 👤 Facebook: { ativo: True, handle: "browstudio" }
+            │     │   ├── 🎥 TikTok: { ativo: False, handle: "" }
+            │     │   ├── 🔗 LinkedIn: { ativo: False, handle: "" }
+            │     │   └── 🐦 X_Twitter: { ativo: False, handle: "" }
+            │     │
+            │     ├── 📂 CONTATO_E_ENDERECO
+            │     │   ├── 📞 Telefone_Contato: "(11) 99999-9999"
+            │     │   ├── 📧 E-mail_Publico: "contato@browstudio.com"
+            │     │   └── 📍 Localizacao: "São Paulo, SP"
+            │     │
+            │     └── 🖼️ IDENTIDADE_VISUAL
+            │           └── 📄 Logo_Principal: "url_da_imagem_no_storage.png"
+            |    
+            📂 INTEGRACAO_GOOGLE_CALENDAR (image_e1543b.png)
+            |        │
+            |        ├── 📄 SINCRONIZACAO_AUTOMATICA
+            |        │   ├── 🔗 URL_iCal: "https://calendar.google.com/calendar/ical/..."
+            |        │   └── 🔄 Status_Sincronizacao: "Ativo / Inativo"
+            |        │
+            |        ├── 📄 EXPORTACAO_DE_DADOS
+            |        │   ├── 📅 Data_Inicio: "14/01/2026"
+            |        │   ├── 📅 Data_Fim: "13/02/2026"
+            |        │   └── 📥 Formatos_Suportados: [".ics", ".csv"]
+            |        │
+            |        └── 📄 IMPORTACAO_DE_AGENDA
+            |            └── 📤 Upload_Arquivo: (Suporta .csv ou .ics para migração em massa)
+            |    
+            └── 📂 PERSONALIZACAO_SITE (Tabela: site_customizations) [Pai de todas as abas]
+                ├── 📂 LAYOUT_GLOBAL (Configurações que afetam todas as páginas)
+                    ├── 📂 CABECALHO
+                    │   ├── 🖼️ fundo_e_efeito_glass: { cor, opacidade, blur }
+                    │   ├── ✍️ cores_textos: { logo, links, hover }
+                    │   └── 🔘 botoes_acao: { cor_fundo, cor_texto }
+                    │
+                    ├── 📂 TIPOGRAFIA
+                    │   ├── 🅰️ fonte_titulos: String
+                    │   ├── 🅱️ fonte_subtitulos: String
+                    │   └── 🔡 fonte_corpo: String
+                    │
+                    ├── 📂 CORES_DO_SITE
+                    │   ├── 🔵 cor_primaria: Hex
+                    |   ├── 🔘 cor_secundaria: Hex
+                    │   └── ⚪ cor_background: Hex
+                    │
+                    └── 📂 RODAPE
+                    |    ├── 🎨 cores: { fundo, textos, icones }
+                    |    ├── 🔤 tipografia: { titulos, corpo }
+                    |    └── 👁️ visibilidade: Boolean
+                    |
+                    |======================================================================
+                ├── 📂 INICIO (Página Principal) 
+                    └──📂 BANNER_PRINCIPAL (Hero Section)
+                        ├── 👁️ visibilidade: Boolean
+                        │
+                        ├── 🧱 ELEMENTO_TITULO (H1)
+                        │   ├── ✍️ texto: "Sua beleza, nossa prioridade"
+                        │   ├── 🎨 cor: "Hex ou Padrão"
+                        │   ├── 🔤 fonte: "Nome da Fonte"
+                        │   ├── 📏 tamanho_mobile: "px/rem"
+                        │   └── 📏 tamanho_desktop: "px/rem"
+                        │
+                        ├── 🧱 ELEMENTO_SUBTITULO (P)
+                        │   ├── ✍️ texto: "Agende seu horário..."
+                        │   ├── 🎨 cor: "Hex ou Padrão"
+                        │   ├── 🔤 fonte: "Nome da Fonte"
+                        │   └── 📏 tamanho: "px/rem"
+                        │
+                        ├── 🔘 ELEMENTO_BOTAO_PRINCIPAL
+                        │   ├── ✍️ texto: "Agendar Agora"
+                        │   ├── 🎨 cor_fundo: "Hex ou Padrão"
+                        │   ├── 🎨 cor_texto: "Hex ou Padrão"
+                        │   ├── 📐 arredondamento: "px"
+                        │   ├── 🎨 cor_borda: "Hex"
+                        │   └── 🔗 link_destino: String
+                        │
+                        └── 🖼️ CONFIGURACOES_DE_APARENCIA (Container)
+                        |    ├── 📷 imagem_fundo_url: String
+                        |    ├── 🌫️ efeito_glass: { ativo: Boolean, intensidade: Number }
+                        |    ├── 🖤 overlay_camada: { cor: Hex, opacidade: % }
+                        |    ├── 📍 alinhamento_vertical: [Topo, Centro, Baixo]
+                        |    ├── 📍 alinhamento_horizontal: [Esquerda, Centro, Direita]
+                        |    └── 📏 altura_secao: [Small, Medium, Full_Screen]
+                        |
+                        📂 NOSSOS_SERVICOS
+                        │    ├── 👁️ visibilidade_secao: Boolean (Ativar/Desativar na Home)
+                        │    ├── 🔢 ordem_na_home: Integer
+                        │    │
+                        │    ├── 🧱 BLOCO_CABEÇALHO (O texto acima dos cards)
+                        │    │   ├── 📄 TITULO_SECAO
+                        │    │   │   ├── ✍️ texto: "Nossos Serviços"
+                        │    │   │   ├── 🎨 cor: "Hex ou Padrão"
+                        │    │   │   ├── 🔤 fonte: "Nome da Fonte"
+                        │    │   │   └── 📏 tamanho: "px/rem"
+                        │    │   │
+                        │    │   ├── 📄 SUBTITULO_SECAO
+                        │    │   │   ├── ✍️ texto: "Escolha o tratamento ideal para si"
+                        │    │   │   ├── 🎨 cor: "Hex ou Padrão"
+                        │    │   │   ├── 🔤 fonte: "Nome da Fonte"
+                        │    │   │   └── 📏 tamanho: "px/rem"
+                        │    │   │
+                        │    │   └── 📍 alinhamento_texto: [Esquerda, Centro, Direita]
+                        │    │
+                        │    ├── 🎨 CONFIGURACOES_DOS_CARDS (Aparência individual de cada serviço)
+                        │    │   ├── 🖼️ mostrar_imagem: Boolean
+                        │    │   ├── 🏷️ mostrar_categoria: Boolean
+                        │    │   ├── 💰 estilo_preco: { visivel: Boolean, cor: Hex, fonte: String }
+                        │    │   ├── ⏱️ estilo_duracao: { visivel: Boolean, cor: Hex }
+                        │    │   ├── 🎨 cor_fundo_card: "Hex ou Padrão"
+                        │    │   ├── 🔳 borda_e_sombra: { tamanho_borda: px, intensidade_sombra: String }
+                        │    │   └── 📐 arredondamento: "px"
+                        │    │
+                        │    └── 🔘 ESTILO_BOTAO_AGENDAR (Botão dentro do card)
+                        │          ├── ✍️ texto_botao: "Agendar"
+                        │          ├── 🎨 cor_fundo: "Hex ou Padrão"
+                        │          ├── 🎨 cor_texto: "Hex ou Padrão"
+                        │          └── 📐 arredondamento_botao: "px"
+                        |
+                        📂 NOSSOS_VALORES
+                        │   ├── 👁️ visibilidade_secao: Boolean
+                        │   ├── 🔢 ordem_na_home: Integer
+                        │   │
+                        │   ├── 🧱 BLOCO_CABEÇALHO (Título e Subtítulo da seção)
+                        │     │   ├── 📄 TITULO
+                        │     │   │   ├── ✍️ texto: "Nossos Valores"
+                        │     │   │   ├── 🎨 cor: "Hex"
+                        │     │   │   └── 🔤 fonte_e_tamanho: { familia, px }
+                        │     │   └── 📄 SUBTITULO
+                        │     │       ├── ✍️ texto: "O que nos move todos os dias"
+                        │     │       └── 🎨 estilo: { cor, fonte, px }
+                        │     │
+                        │     ├── 🎨 ESTILO_VISUAL_DOS_ITENS (Configuração Global dos Cards de Valores)
+                        │     │   ├── 📐 layout: [Grade, Lista, Carrossel]
+                        │     │   ├── 🎨 cor_fundo_item: "Hex"
+                        │     │   ├── 🔳 borda_arredondamento: "px"
+                        │     │   └── 📍 alinhamento_interno: [Esquerda, Centro]
+                        │     │
+                        │     └── 📂 LISTA_DINAMICA_DE_VALORES (Aqui é onde ele adiciona/apaga)
+                        │           └── 📁 [ITEM_VALOR_GERADO_ID]
+                        │               ├── 🛡️ id: UUID (Gerado ao clicar em "Adicionar")
+                        │               ├── 🔢 ordem: Integer (Para arrastar e reordenar)
+                        │               ├── 🎭 ICONE/IMAGEM
+                        │               │   ├── 🏷️ tipo: [Icone, Imagem, Numero]
+                        │               │   ├── 🔗 valor: "sparkles" ou "url_da_imagem"
+                        │               │   └── 🎨 cor_icone: "Hex"
+                        │               │
+                        │               ├── 📄 TITULO_DO_VALOR
+                        │               │   ├── ✍️ texto: "Qualidade"
+                        │               │   └── 🎨 estilo: { cor, fonte, px }
+                        │               │
+                        │               └── 📄 DESCRICAO_DO_VALOR
+                        │                   ├── ✍️ texto: "Usamos apenas os melhores produtos..."
+                        │                   └── 🎨 estilo: { cor, fonte, px }
+                        📂 PREVIA_GALERIA
+                        |   ├── 👁️ visibilidade_secao: Boolean
+                        |   ├── 🔢 ordem_na_home: Integer
+                        |   │
+                        |   ├── 🧱 BLOCO_CABEÇALHO
+                        |   │   ├── 📄 TITULO
+                        |   │   │   ├── ✍️ texto: "Nossa Galeria"
+                        |   │   │   └── 🎨 estilo: { cor, fonte, px }
+                        |   │   └── 📄 SUBTITULO
+                        |   │       ├── ✍️ texto: "Confira nossos últimos trabalhos"
+                        |   │       └── 🎨 estilo: { cor, fonte, px }
+                        |   │
+                        |   ├── ⚙️ LOGICA_DE_EXIBICAO (O Diferencial)
+                        |   │   ├── 🔄 modo_selecao: [Automatico_Recentes, Manual_Destaques]
+                        |   │   ├── 🔢 quantidade_fotos: [3, 6, 9, 12] (Limite de exibição na Home)
+                        |   │   └── 🔳 layout_grid: [Mosaico, Quadrados_Fixos, Carrossel]
+                        |   ├── 🎨 ESTILO_VISUAL_DAS_FOTOS
+                        |   │   ├── 📐 proporcao_imagem: [1:1 (Quadrado), 4:3, 16:9]
+                        |   │   ├── ➕ espacamento_entre_fotos: "px"
+                        |   │   ├── 📐 arredondamento_bordas: "px"
+                        |   │   └── 🎞️ efeito_ao_passar_mouse: [Zoom, Brilho, Nenhum]
+                        |   │
+                        |   └── 🔘 BOTAO_VER_MAIS (Link para a página Galeria completa)
+                        |   ├── 👁️ mostrar_botao: Boolean
+                        |   ├── ✍️ texto_botao: "Ver Galeria Completa"
+                        |   └── 🎨 estilo: { cor_fundo, cor_texto, arredondamento }
+                        |
+                        📂 CHAMADA_PARA_ACAO (CTA Section)
+                        │   ├── 👁️ visibilidade_secao: Boolean
+                        │   ├── 🔢 ordem_na_home: Integer
+                        │   │
+                        │   ├── 🧱 ELEMENTO_TITULO_CTA
+                        │   │   ├── ✍️ texto: "Pronto para transformar seu olhar?"
+                        │   │   ├── 🎨 cor: "Hex ou Padrão"
+                        │   │   ├── 🔤 fonte: "Nome da Fonte"
+                        │   │   └── 📏 tamanho: { desktop: "px", mobile: "px" }
+                        │   │
+                        │   ├── 🧱 ELEMENTO_SUBTITULO_CTA
+                        │   │   ├── ✍️ texto: "Reserve seu horário em menos de 1 minuto."
+                        │   │   ├── 🎨 cor: "Hex"
+                        │   │   └── 🔤 estilo: { fonte, tamanho }
+                        │   │
+                        │   ├── 🔘 BOTAO_DE_CONVERSAO (O principal)
+                        │   │   ├── ✍️ texto: "Agendar Agora"
+                        │   │   ├── 🎨 estilo_visual: { cor_fundo, cor_texto, cor_borda }
+                        │   │   ├── 📐 arredondamento: "px"
+                        │   │
+                    |   │   └── 🎨 CONFIGURACOES_DE_DESIGN (O Container)
+                    |   │       ├── 📷 tipo_fundo: [Cor_Solida, Gradiente, Imagem]
+                    |   │       ├── 🎨 cor_ou_imagem_url: String
+                    |   │       ├── 🌫️ efeito_glass: { ativo: Boolean, intensidade: Number }
+                    |   │       ├── 🔳 bordas: { superior: Boolean, inferior: Boolean } (Para divisórias)
+                    |   │       ├── 📐 preenchimento_interno: "px" (Padding)
+                    |   │       └── 📍 alinhamento_elementos: [Esquerda, Centro, Direita]
+                    |
+                    | ========================================================================================================================    
+                ├── 📂 GALERIA [Próxima etapa]
+                    │   ├── 👁️ visibilidade_pagina: Boolean (Ativar/Desativar no Menu)
+                    │   │
+                    │   ├── 🧱 CABECALHO_DA_PAGINA
+                    │   │   ├── 📄 TITULO
+                    │   │   │   ├── ✍️ texto: "Nossos Trabalhos"
+                    │   │   │   └── 🎨 estilo: { cor, fonte, px, alinhamento }
+                    │   │   └── 📄 SUBTITULO
+                    │   │       ├── ✍️ texto: "Conheça o resultado da nossa dedicação"
+                    │   │       └── 🎨 estilo: { cor, fonte, px }
+                    │   │
+                    │   ├── 🖼️ CONFIGURACOES_DE_EXIBICAO (O Grid Principal)
+                    │   │   ├── 🔳 tipo_grid: [Mosaico/Masonry, Grade_Quadrada, Lista_Vertical]
+                    │   │   ├── 🔢 colunas_desktop: [2, 3, 4, 5]
+                    │   │   ├── 🔢 colunas_mobile: [1, 2]
+                    │   │   ├── ➕ espacamento_fotos: "px"
+                    │   │   └── 📐 arredondamento_foto: "px"
+                    │   │
+                    │   ├── 🖱️ INTERATIVIDADE (Lightbox)
+                    │   │   ├── 🔍 clique_abrir_foto: Boolean (Efeito de Zoom/Slide)
+                    │   │   ├── 📄 mostrar_legenda: Boolean
+                    │   │   └── 🔗 permitir_compartilhamento: Boolean
+                    │   │
+                    │   └── 🎨 ESTILO_DO_CONTAINER (Fundo da Página)
+                    │       ├── 📷 tipo_fundo: [Cor_Solida, Gradiente]
+                    │       └── 🎨 cor_fundo: Hex
+                    |====================================================================================================================
+                ├── 📂 SOBRE_NOS [Próxima etapa]
+                        📂 BANNER_SOBRE (Seção Principal de Introdução)
+                    │   ├── 👁️ visibilidade_secao: Boolean (O "olho" que liga/desliga a seção inteira)
+                    │   ├── 🔢 ordem: Integer (Posição na página)
+                    │   │
+                    │   ├── 🏷️ ELEMENTO_TAG (Pequeno texto de destaque no topo)
+                    │   │   ├── 👁️ mostrar_tag: Boolean (O "olho" individual da tag)
+                    │   │   ├── ✍️ texto: "DESDE 2010"
+                    │   │   ├── 🎨 cor_texto: "Hex ou Padrão"
+                    │   │   ├── 🎨 cor_fundo_tag: "Hex ou Padrão"
+                    │   │   ├── 🔤 fonte: "Nome da Fonte"
+                    │   │   └── 📏 tamanho_fonte: "px"
+                    │   │
+                    │   ├── 🧱 ELEMENTO_TITULO
+                    │       ├── 👁️ mostrar_titulo: Boolean (O "olho" individual do título)
+                    │   │   ├── ✍️ texto: "Nossa História"
+                    │   │   ├── 🎨 cor: "Hex ou Padrão"
+                    │   │   ├── 🔤 fonte: "Nome da Fonte"
+                    │   │   ├── 📏 tamanho_desktop: "px"
+                    │   │   └── 📏 tamanho_mobile: "px"
+                    │   │
+                    │   ├── 🧱 ELEMENTO_SUBTITULO
+                    │   │   ├── 👁️ mostrar_subtitulo: Boolean (O "olho" individual do subtítulo)
+                    │   │   ├── ✍️ texto: "Conheça a trajetória da nossa marca"
+                    │   │   ├── 🎨 cor: "Hex ou Padrão"
+                    │   │   ├── 🔤 fonte: "Nome da Fonte"
+                    │   │   └── 📏 tamanho_fonte: "px"
+                    │   │
+                    │   ├── 🎭 ELEMENTO_ICONE_DECORATIVO
+                    │   │   ├── 👁️ mostrar_icone: Boolean (O "olho" individual do ícone)
+                    │   │   ├── 🏷️ icone_slug: "sparkles" (ID da biblioteca Lucide/FontAwesome)
+                    │   │   ├── 🎨 cor_icone: "Hex ou Padrão"
+                    │   │   ├── 📏 tamanho_icone: "px"
+                    │   │   └── 📍 posicao_relativa: [Topo, Entre_Textos, Rodapé_Secao]
+                    │   │
+                    │   └── 🖼️ CONFIGURACOES_DE_APARENCIA (O Container/Fundo)
+                    │       ├── 👁️ mostrar_background: Boolean (O "olho" da aparência)
+                    │       │
+                    │       ├── ⚙️ LOGICA_DE_FUNDO
+                    │       │   ├── 🔘 tipo_fundo: [IMAGEM, COR_SOLIDA, GRADIENTE]
+                    │       │   │
+                    │       │   ├── 🎨 CONFIG_COR_SOLIDA (Se tipo_fundo == COR_SOLIDA)
+                    │       │   │   ├── 🎨 cor_hex: "#121212"
+                    │       │   │   └── 💧 opacidade: %
+                    │       │   │
+                    │       │   └── 📷 CONFIG_IMAGEM (Se tipo_fundo == IMAGEM)
+                    │       │       ├── 🔗 url_imagem: String
+                    │       │       ├── 📍 posicionamento: [Cover, Contain, Fixed, Parallax]
+                    │       │       └── 🖤 overlay_camada: { cor: Hex, opacidade: % }
+                    │       │
+                    │       ├── 🌫️ EFEITO_GLASS
+                    │       │   ├── 👁️ ativo: Boolean
+                    │       │   └── 📏 intensidade_blur: "px"
+                    │       │
+                    │       └── 📏 ESTRUTURA_E_LAYOUT
+                    │       ├── 📍 alinhamento_conteudo: [Esquerda, Centro, Direita]
+                    │       ├── 📏 preenchimento_vertical: "px" (Padding Top/Bottom)
+                    │       └── 📏 altura_minima: [Small, Medium, Large, Full_Screen]
+                    |       ---------------------------------------------------------------------------------------------
+                    |   📂 NOSSA_HISTORIA (Seção de Conteúdo Principal)
+                    │       ├── 👁️ visibilidade_secao: Boolean
+                    │       ├── 🔢 ordem: Integer
+                    │       │
+                    │       ├── 🧱 ELEMENTO_TAG
+                    │       │   ├── 👁️ mostrar_tag: Boolean
+                    │       │   ├── ✍️ texto: "NOSSA TRAJETÓRIA"
+                    │       │   ├── 🎨 estilo: { cor_texto: Hex, cor_fundo: Hex }
+                    │       │   ├── 🔤 tipografia: { fonte: String, tamanho: px }
+                    │       │   └── 🎭 icone_tag: { mostrar: Boolean, slug: String, cor: Hex }
+                    │       │
+                    │       ├── 🧱 ELEMENTO_TITULO
+                    │       │   ├── 👁️ mostrar_titulo: Boolean
+                    │       │   ├── ✍️ texto: "Uma jornada dedicada à sua autoestima"
+                    │       │   ├── 🎨 cor: Hex
+                    │       │   └── 🔤 tipografia: { fonte: String, tamanho_desk: px, tamanho_mob: px }
+                    │       │
+                    │       ├── 🧱 ELEMENTO_TEXTO_HISTORIA (O corpo do texto)
+                    │       │   ├── 👁️ mostrar_texto: Boolean
+                    │       │   ├── ✍️ conteudo_html: "Texto longo da história..."
+                    │       │   ├── 🎨 cor: Hex
+                    │       │   └── 🔤 tipografia: { fonte: String, tamanho: px, espacamento_linhas: px }
+                    │       │
+                    │       ├── 🖼️ ELEMENTO_IMAGEM_LATERAL (A foto ao lado do texto)
+                    │       │   ├── 👁️ mostrar_imagem: Boolean
+                    │       │   ├── 🔗 url_imagem: String
+                    │       │   ├── 📐 formato: [Quadrado, Retrato, Original, Circular]
+                    │       │   ├── 🔳 borda: { arredondamento: px, cor: Hex, espessura: px }
+                    │       │   └── 🌫️ sombra: { ativa: Boolean, intensidade: [Leve, Media, Forte] }
+                    │       │
+                    │       └── ⚙️ CONFIGURACOES_DE_LAYOUT_E_APARENCIA
+                    │           ├── 📍 disposicao: [Texto_Esquerda_Imagem_Direita, Texto_Direita_Imagem_Esquerda]
+                    │           ├── 🎨 fundo_da_secao: 
+                    │           │   ├── 🔘 tipo_fundo: [COR_SOLIDA, IMAGEM, GRADIENTE]
+                    │           │   ├── 🎨 cor_solida: { hex: Hex, opacidade: % }
+                    │           │   └── 📷 imagem_fundo: { url: String, overlay_opacidade: % }
+                    │           ├── 🌫️ efeito_glass: { ativo: Boolean, intensidade: px }
+                    │           ├── 📏 espacamento: { padding_topo: px, padding_baixo: px }
+                    │           └── 📍 alinhamento_texto: [Esquerda, Centro, Justificado]
+                    |       ------------------------------------------------------------------------------------------------------------------       
+                    │   📂 NOSSOS_VALORES (Seção de Diferenciais/Cultura)
+                        │       ├── 👁️ visibilidade_secao: Boolean
+                        │       ├── 🔢 ordem: Integer
+                        │       │
+                        │       ├── 🧱 ELEMENTO_CABEÇALHO (O texto que introduz os valores)
+                        │       │   ├── 📄 TITULO
+                        │       │   │   ├── 👁️ mostrar: Boolean
+                        │       │   │   ├── ✍️ texto: "Nossos Valores"
+                        │       │   │   ├── 🎨 estilo: { cor: Hex, fonte: String, tamanho: px }
+                        │       │   │   └── 📍 alinhamento: [Esquerda, Centro, Direita]
+                        │       │   └── 📄 SUBTITULO
+                        │       │       ├── 👁️ mostrar: Boolean
+                        │       │       ├── ✍️ texto: "Os pilares que sustentam nosso atendimento"
+                        │       │       └── 🎨 estilo: { cor: Hex, fonte: String, tamanho: px }
+                        │       │
+                        │       ├── 📂 LISTA_DE_VALORES (Itens dinâmicos: Adicionar/Remover)
+                        │       │   └── 📁 [ITEM_VALOR_ID]
+                        │       │       ├── 👁️ visibilidade_item: Boolean (O olho de cada card)
+                        │       │       ├── 🔢 ordem: Integer
+                        │       │       │
+                        │       │       ├── 🎭 ICONE_OU_IMAGEM
+                        │       │       │   ├── 👁️ mostrar: Boolean
+                        │       │       │   ├── ⚙️ tipo: [ICONE, IMAGEM, NUMERO]
+                        │       │       │   ├── 🔗 valor: "shield-check" ou "url_da_imagem"
+                        │       │       │   ├── 🎨 cor_personalizada: Hex
+                        │       │       │   └── 📏 tamanho: px
+                        │       │       │
+                        │       │       ├── 📄 TITULO_DO_VALOR
+                        │       │       │   ├── 👁️ mostrar: Boolean
+                        │       │       │   ├── ✍️ texto: "Ética e Respeito"
+                        │       │       │   └── 🎨 estilo: { cor: Hex, fonte: String, tamanho: px }
+                        │       │       │
+                        │       │       └── 📄 DESCRICAO_DO_VALOR
+                        │       │           ├── 👁️ mostrar: Boolean
+                        │       │           ├── ✍️ texto: "Tratamos cada cliente com exclusividade..."
+                        │       │           └── 🎨 estilo: { cor: Hex, fonte: String, tamanho: px }
+                        │       │
+                        │       └── ⚙️ CONFIGURACOES_DE_APARENCIA (Container da Seção)
+                        │           ├── 🔘 tipo_fundo: [COR_SOLIDA, IMAGEM, GRADIENTE]
+                        │           ├── 🎨 cor_fundo: { hex: Hex, opacidade: % }
+                        │           ├── 🌫️ efeito_glass: { ativo: Boolean, intensidade: px }
+                        │           ├── 📐 layout_grid: [1_Coluna, 2_Colunas, 3_Colunas, Carrossel]
+                        │           ├── 🎨 estilo_card: 
+                        │           │   ├── 🎨 cor_fundo_card: Hex
+                        │           │   ├── 📐 arredondamento: px
+                        │           │   └── 🔳 borda: { espessura: px, cor: Hex }
+                        │           └── 📏 espacamento: { padding_topo: px, padding_baixo: px }
+                        │   📂 NOSSA_EQUIPE (Seção de Profissionais)
+                        │       ├── 👁️ visibilidade_secao: Boolean
+                        │       ├── 🔢 ordem: Integer
+                        │       │
+                        │       ├── 🧱 ELEMENTO_CABEÇALHO
+                        │       │   ├── 📄 TITULO
+                        │       │   │   ├── 👁️ mostrar: Boolean
+                        │       │   │   ├── ✍️ texto: "Conheça nossos Especialistas"
+                        │       │   │   ├── 🎨 estilo: { cor: Hex, fonte: String, tamanho: px }
+                        │       │   │   └── 📍 alinhamento: [Esquerda, Centro, Direita]
+                        │       │   └── 📄 SUBTITULO
+                        │       │       ├── 👁️ mostrar: Boolean
+                        │       │       ├── ✍️ texto: "Profissionais qualificados para o seu cuidado"
+                        │       │       └── 🎨 estilo: { cor: Hex, fonte: String, tamanho: px }
+                        │       │
+                        │       ├── 📂 LISTA_DE_PROFISSIONAIS (Itens dinâmicos)
+                        │       │   └── 📁 [PROFISSIONAL_ID]
+                        │       │       ├── 👁️ visibilidade_card: Boolean (Olho individual)
+                        │       │       ├── 🔢 ordem: Integer
+                        │       │       │
+                        │       │       ├── 🖼️ FOTO_PERFIL
+                        │       │       │   ├── 👁️ mostrar: Boolean
+                        │       │       │   ├── 🔗 url_imagem: String
+                        │       │       │   ├── 📐 formato: [Circular, Quadrado, Arredondado]
+                        │       │       │   └── 🔳 borda: { espessura: px, cor: Hex }
+                        │       │       │
+                        │       │       ├── 📄 NOME_PROFISSIONAL
+                        │       │       │   ├── 👁️ mostrar: Boolean
+                        │       │       │   ├── ✍️ texto: "Lucas Silva"
+                        │       │       │   └── 🎨 estilo: { cor: Hex, fonte: String, tamanho: px }
+                        │       │       │
+                        │       │       ├── 📄 CARGO_ESPECIALIDADE
+                        │       │       │   ├── 👁️ mostrar: Boolean
+                        │       │       │   ├── ✍️ texto: "Master Barber"
+                        │       │       │   └── 🎨 estilo: { cor: Hex, fonte: String, tamanho: px }
+                        │       │       │
+                        │       │       ├── 📄 BIO_RESUMO
+                        │       │       │   ├── 👁️ mostrar: Boolean
+                        │       │       │   ├── ✍️ texto: "10 anos de experiência em cortes clássicos..."
+                        │       │       │   └── 🎨 estilo: { cor: Hex, fonte: String, tamanho: px }
+                        │       │       │
+                        │       │       └── 📱 REDES_SOCIAIS_INDIVIDUAL
+                        │       │           ├── 👁️ mostrar_redes: Boolean
+                        │       │           ├── 🎨 cor_icones: Hex
+                        │       │           ├── 🔗 instagram: String
+                        │       │           └── 🔗 linkedin: String
+                        │       │
+                        │       └── ⚙️ CONFIGURACOES_DE_APARENCIA (Container da Seção)
+                        │           ├── 🔘 tipo_fundo: [COR_SOLIDA, IMAGEM, GRADIENTE]
+                        │           ├── 🎨 cor_fundo_secao: { hex: Hex, opacidade: % }
+                        │           ├── 🌫️ efeito_glass: { ativo: Boolean, intensidade: px }
+                        │           ├── 📐 layout_exibicao: [Grid_Cards, Carrossel, Lista_Vertical]
+                        │           ├── 🎨 estilo_dos_cards:
+                        │           │   ├── 🎨 fundo_card: Hex
+                        │           │   ├── 📐 arredondamento: px
+                        │           │   └── 🌫️ sombra: { ativa: Boolean, intensidade: [Leve, Media] }
+                        │           └── 📏 espacamento: { padding_topo: px, padding_baixo: px, gap_entre_cards: px }
+                        │   📂 O_QUE_DIZEM_NOSSOS_CLIENTES (Seção de Depoimentos/Feedback)
+                        │       ├── 👁️ visibilidade_secao: Boolean
+                        │       ├── 🔢 ordem: Integer
+                        │       │
+                        │       ├── 🧱 ELEMENTO_CABEÇALHO
+                        │       │   ├── 📄 TITULO
+                        │       │   │   ├── 👁️ mostrar: Boolean
+                        │       │   │   ├── ✍️ texto: "O que dizem nossos clientes"
+                        │       │   │   ├── 🎨 estilo: { cor: Hex, fonte: String, tamanho: px }
+                        │       │   │   └── 📍 alinhamento: [Esquerda, Centro, Direita]
+                        │       │   └── 📄 SUBTITULO
+                        │       │       ├── 👁️ mostrar: Boolean
+                        │       │       ├── ✍️ texto: "A satisfação de quem confia no nosso trabalho"
+                        │       │       └── 🎨 estilo: { cor: Hex, fonte: String, tamanho: px }
+                        │       │
+                        │       ├── 📂 LISTA_DE_AVALIACOES (Itens dinâmicos - Salvar Avaliações)
+                        │       │   └── 📁 [AVALIACAO_ID]
+                        │       │       ├── 👁️ visibilidade_card: Boolean (Olho individual)
+                        │       │       ├── 🔢 ordem: Integer
+                        │       │       │
+                        │       │       ├── 🖼️ FOTO_CLIENTE
+                        │       │       │   ├── 👁️ mostrar: Boolean
+                        │       │       │   ├── 🔗 url_imagem: String
+                        │       │       │   └── 📐 estilo: { formato: [Circular, Quadrado], tamanho: px }
+                        │       │       │
+                        │       │       ├── 📄 NOME_CLIENTE
+                        │       │       │   ├── 👁️ mostrar: Boolean
+                        │       │       │   ├── ✍️ texto: "Mariana Oliveira"
+                        │       │       │   └── 🎨 estilo: { cor: Hex, fonte: String, tamanho: px }
+                        │       │       │
+                        │       │       ├── ⭐️ SISTEMA_DE_NOTAS (Estrelas)
+                        │       │       │   ├── 👁️ mostrar: Boolean
+                        │       │       │   ├── 🔢 quantidade_estrelas: [1 a 5]
+                        │       │       │   └── 🎨 cor_estrelas: Hex
+                        │       │       │
+                        │       │       ├── 📄 TEXTO_DA_AVALIACAO
+                        │       │       │   ├── 👁️ mostrar: Boolean
+                        │       │       │   ├── ✍️ texto: "O atendimento foi impecável, superou minhas expectativas..."
+                        │       │       │   └── 🎨 estilo: { cor: Hex, fonte: String, tamanho: px }
+                        │       │       │
+                        │       │       └── 🎭 ICONE_ASPAS (Detalhe decorativo)
+                        │       │           ├── 👁️ mostrar: Boolean
+                        │       │           ├── 🎨 cor: Hex
+                        │       │           └── 📍 posicao: [Topo_Esquerda, Rodapé_Direita]
+                        │       │
+                        │       └── ⚙️ CONFIGURACOES_DE_APARENCIA (Container da Seção)
+                        │           ├── 🔘 tipo_fundo: [COR_SOLIDA, IMAGEM, GRADIENTE]
+                        │           ├── 🎨 cor_fundo_secao: { hex: Hex, opacidade: % }
+                        │           ├── 🌫️ efeito_glass: { ativo: Boolean, intensidade: px }
+                        │           ├── 📐 layout_exibicao: [Grid_Cards, Carrossel_Slider, Lista_Unica]
+                        │           ├── 🎨 estilo_dos_cards:
+                        │           │   ├── 🎨 fundo_card: Hex
+                        │           │   ├── 📐 arredondamento: px
+                        │           │   ├── 🔳 borda: { espessura: px, cor: Hex }
+                        │           │   └── 🌫️ sombra: { ativa: Boolean, intensidade: [Leve, Media] }
+                        │           └── 📏 espacamento: { padding_topo: px, padding_baixo: px, gap_entre_cards: px }
+                    |   |
+                    |   |
+                    |   |                    
+                ├──📂 AGENDAR [Próxima etapa]
+                        👁️ visibilidade_pagina: Boolean
+                        📂 PASSO_1_SERVICOS (Seleção de Categoria e Serviço)
+                    │       ├── 👁️ visibilidade_secao: Boolean
+                    │       │
+                    │       ├── 🧱 CABECALHO_DO_PASSO
+                    │       │   ├── 📄 TITULO_PASSO
+                    │       │   │   ├── 👁️ mostrar: Boolean
+                    │       │   │   ├── ✍️ texto: "Selecione os Serviços"
+                    │       │   │   └── 🎨 estilo: { cor: Hex, fonte: String, tamanho: px }
+                    │       │   └── 📄 SUBTITULO_PASSO
+                    │       │       ├── 👁️ mostrar: Boolean
+                    │       │       ├── ✍️ texto: "Você pode selecionar um ou mais serviços"
+                    │       │       └── 🎨 estilo: { cor: Hex, fonte: String, tamanho: px }
+                    │       │
+                    │       ├── 📂 FILTRO_CATEGORIAS (Abas ou Pílulas)
+                    │       │   ├── 👁️ mostrar_filtros: Boolean
+                    │       │   ├── 🎨 cor_texto_aba: Hex
+                    │       │   ├── 🎨 cor_fundo_aba: Hex
+                    │       │   ├── 🎨 cor_aba_ativa: Hex
+                    │       │   ├── 📐 arredondamento: px
+                    │       │   └── 🔤 tipografia: { fonte: String, tamanho: px }
+                    │       │
+                    │       ├── 📂 LISTA_DE_CARDS_SERVICO
+                    │       │   ├── 📁 ELEMENTO_CARD
+                    │       │   │   ├── 🎨 cor_fundo_card: Hex
+                    │       │   │   ├── 🔳 borda: { espessura: px, cor: Hex, arredondamento: px }
+                    │       │   │   ├── 🌫️ efeito_glass: { ativo: Boolean, intensidade: px }
+                    │       │   │   └── 🌫️ sombra_selecionado: { cor: Hex, intensidade: px }
+                    │       │   │
+                    │       │   ├── 📁 ELEMENTO_TITULO_SERVICO
+                    │       │   │   ├── 🎨 cor: Hex
+                    │       │   │   └── 🔤 tipografia: { fonte: String, tamanho: px, peso: [Regular, Bold] }
+                    │       │   │
+                    │       │   ├── 📁 ELEMENTO_PRECO
+                    │       │   │   ├── 👁️ mostrar_preco: Boolean
+                    │       │   │   ├── 🎨 cor: Hex
+                    │       │   │   └── 🔤 tipografia: { fonte: String, tamanho: px }
+                    │       │   │
+                    │       │   ├── 📁 ELEMENTO_DURACAO
+                    │       │   │   ├── 👁️ mostrar_duracao: Boolean
+                    │       │   │   ├── 🎨 cor: Hex
+                    │       │   │   ├── 🎭 icone_relogio: { mostrar: Boolean, cor: Hex }
+                    │       │   │   └── 🔤 tipografia: { fonte: String, tamanho: px }
+                    │       │   │
+                    │       │   └── 📁 ELEMENTO_DESCRICAO (Resumo do serviço)
+                    │       │       ├── 👁️ mostrar_descricao: Boolean
+                    │       │       ├── 🎨 cor: Hex
+                    │       │       └── 🔤 tipografia: { fonte: String, tamanho: px }
+                    │       │
+                    │       ├── 🔘 BOTAO_SELECIONAR (Checkbox ou Botão no Card)
+                    │       │   ├── 🎨 cor_check_ativo: Hex
+                    │       │   ├── 🎨 cor_check_vazio: Hex
+                    │       │   └── 📐 estilo_check: [Circulo, Quadrado]
+                    │       │
+                    │       └── ⚙️ CONFIGURACOES_DE_LAYOUT
+                    │           ├── 📐 layout_grid: [Lista_Simples, Cards_Lado_a_Lado]
+                    │           ├── 📏 espacamento_entre_itens: px
+                    │           └── 📏 padding_container: px
+                    
+                    │    📂 PASSO_2_DATA (Seleção do Dia)
+                    │       ├── 👁️ visibilidade_secao: Boolean
+                    │       │
+                    │       ├── 🧱 CABECALHO_DO_PASSO
+                    │       │   ├── 📄 TITULO_PASSO
+                    │       │   │   ├── 👁️ mostrar: Boolean
+                    │       │   │   ├── ✍️ texto: "Escolha a Data"
+                    │       │   │   └── 🎨 estilo: { cor: Hex, fonte: String, tamanho: px }
+                    │       │   └── 📄 SUBTITULO_PASSO
+                    │       │       ├── 👁️ mostrar: Boolean
+                    │       │       ├── ✍️ texto: "Selecione o dia disponível para seu atendimento"
+                    │       │       └── 🎨 estilo: { cor: Hex, fonte: String, tamanho: px }
+                    │       │
+                    │       ├── 📅 CUSTOMIZACAO_DO_CALENDARIO (O Widget Principal)
+                    │       │   ├── 🧱 CABECALHO_CALENDARIO (Mês e Navegação)
+                    │       │   │   ├── 🎨 cor_texto_mes_ano: Hex
+                    │       │   │   ├── 🔤 tipografia_mes: { fonte: String, tamanho: px }
+                    │       │   │   ├── 🎨 cor_setas_navegacao: Hex
+                    │       │   │   └── 🎨 fundo_cabecalho: Hex (Opcional)
+                    │       │   │
+                    │       │   ├── 🧱 DIAS_DA_SEMANA (Dom, Seg, Ter...)
+                    │       │   │   ├── 👁️ mostrar_barra_semana: Boolean
+                    │       │   │   ├── 🎨 cor_texto: Hex
+                    │       │   │   ├── 🔤 tipografia: { fonte: String, tamanho: px }
+                    │       │   │   └── 🎨 fundo_barra: Hex
+                    │       │   │
+                    │       │   ├── 🔘 ESTILO_BOTAO_DIA (Célula Individual)
+                    │       │   │   ├── 📐 arredondamento: px (Ex: 0 para quadrado, 50 para círculo)
+                    │       │   │   ├── 📏 tamanho_celula: px (Altura/Largura)
+                    │       │   │   │
+                    │       │   │   ├── 🟢 ESTADO_DISPONIVEL
+                    │       │   │   │   ├── 🎨 cor_fundo: Hex
+                    │       │   │   │   └── 🎨 cor_texto: Hex
+                    │       │   │   │
+                    │       │   │   ├── 🔵 ESTADO_SELECIONADO
+                    │       │   │   │   ├── 🎨 cor_fundo: Hex
+                    │       │   │   │   ├── 🎨 cor_texto: Hex
+                    │       │   │   │   └── 🔳 borda_destaque: { espessura: px, cor: Hex }
+                    │       │   │   │
+                    │       │   │   └── ⚪ ESTADO_INDISPONIVEL (Passado ou Sem Vaga)
+                    │       │   │       ├── 🎨 cor_texto: Hex
+                    │       │   │       ├── 🎨 cor_fundo: Hex
+                    │       │   │       └── 💧 opacidade: % (Para efeito de desabilitado)
+                    │       │   │
+                    │       │   └── 🎨 FUNDO_DO_WIDGET_CALENDARIO
+                    │       │       ├── 🔘 tipo: [TRANSPARENTE, COR_SOLIDA, GLASS]
+                    │       │       ├── 🎨 cor_hex: Hex
+                    │       │       └── 🌫️ intensidade_glass: px
+                    │       │
+                    │       └── ⚙️ ESTRUTURA_DE_PAGINACAO
+                    │           ├── 🔘 BOTAO_PROXIMO_PASSO
+                    │           │   ├── ✍️ texto: "Ver Horários Disponíveis"
+                    │           │   ├── 🎨 estilo: { fundo: Hex, texto: Hex }
+                    │           │   └── 👁️ visibilidade: Boolean
+                    │           └── 📏 padding_container: px
+                        📂 PASSO_3_HORARIO (Seleção de Horário)
+                    │       ├── 👁️ visibilidade_secao: Boolean
+                    │       │
+                    │       ├── 🧱 CABECALHO_DO_PASSO
+                    │       │   ├── 📄 TITULO: { texto: String, cor: Hex, fonte: String, tamanho: px }
+                    │       │   └── 📄 SUBTITULO: { texto: String, cor: Hex, fonte: String, tamanho: px }
+                    │       │
+                    │       ├── 🖼️ CONFIGURACOES_DE_APARENCIA (Lógica de Fundo)
+                    │       │   ├── 🔘 tipo_fundo: [COR_SOLIDA, IMAGEM]
+                    │       │   │
+                    │       │   ├── 🎨 SE_COR_SOLIDA
+                    │       │   │   └── 🎨 cor_fundo: Hex
+                    │       │   │
+                    │       │   └── 📷 SE_IMAGEM (Salvar todo o conjunto abaixo)
+                    │       │       ├── 🔗 url_imagem: String
+                    │       │       ├── 📍 posicionamento: [Cover, Contain, Fixed/Parallax]
+                    │       │       ├── 🖤 overlay_camada: { cor: Hex, opacidade: % } (Essencial para leitura do texto)
+                    │       │       ├── 🌫️ blur_imagem: px (Desfoque de fundo)
+                    │       │       └── 👁️ visibilidade_background: Boolean
+                    │       │
+                    │       ├── 🕒 ESTILO_DOS_SLOTS_DE_HORA (Cards individuais)
+                    │       │   ├── 🎨 cor_fundo_padrao: Hex
+                    │       │   ├── 🎨 cor_texto_padrao: Hex
+                    │       │   ├── 🎨 cor_fundo_selecionado: Hex (Destaque)
+                    │       │   ├── 🎨 cor_texto_selecionado: Hex
+                    │       │   ├── 🔳 borda: { espessura: px, cor: Hex, arredondamento: px }
+                    │       │   └── 🌫️ efeito_glass: { ativo: Boolean, intensidade: px }
+                    │       │
+                    │       └── ⚙️ ESTRUTURA_DA_GRADE
+                    │           ├── 🔢 colunas: [3, 4, 5]
+                    │           └── 📏 padding_container: px
+                    │   📂 PASSO_4_CONFIRMACAO (Dados do Cliente e Finalização)
+                    │       ├── 👁️ visibilidade_secao: Boolean
+                    │       │
+                    │       ├── 🧱 CABECALHO_DO_PASSO
+                    │       │   ├── 📄 TITULO: { texto: "Finalizar Agendamento", cor: Hex, fonte: String, tamanho: px }
+                    │       │   └── 📄 SUBTITULO: { texto: "Preencha seus dados para confirmar", cor: Hex, fonte: String, tamanho: px }
+                    │       │
+                    │       ├── 🖼️ CONFIGURACOES_DE_APARENCIA (Lógica de Fundo)
+                    │       │   ├── 🔘 tipo_fundo: [COR_SOLIDA, IMAGEM]
+                    │       │   │
+                    │       │   ├── 🎨 SE_COR_SOLIDA
+                    │       │   │   └── 🎨 cor_fundo_hex: Hex
+                    │       │   │
+                    │       │   └── 📷 SE_IMAGEM (Configs completas para persistência no banco)
+                    │       │       ├── 🔗 url_imagem: String
+                    │       │       ├── 📍 posicionamento: [Cover, Contain, Fixed]
+                    │       │       ├── 🖤 overlay_camada: { cor: Hex, opacidade: % }
+                    │       │       ├── 🌫️ blur_fundo: px
+                    │       │       └── 👁️ visibilidade_background: Boolean
+                    │       │
+                    │       ├── 📋 ESTILO_DO_FORMULARIO (Inputs de Nome, Tel, Email)
+                    │       │   ├── 🎨 cor_fundo_input: Hex
+                    │       │   ├── 🎨 cor_texto_input: Hex
+                    │       │   ├── 🎨 cor_label_input: Hex (O texto acima da caixa)
+                    │       │   ├── 🔳 borda_input: { cor: Hex, espessura: px, arredondamento: px }
+                    │       │   └── 🌫️ estilo_glass_input: { ativo: Boolean, intensidade: px }
+                    │       │
+                    │       ├── 📜 RESUMO_DO_AGENDAMENTO (Box de revisão dos passos anteriores)
+                    │       │   ├── 👁️ mostrar_resumo: Boolean
+                    │       │   ├── 🎨 cor_fundo_box: Hex
+                    │       │   ├── 🎨 cor_texto_detalhes: Hex
+                    │       │   └── 🔳 borda_resumo: { cor: Hex, arredondamento: px }
+                    │       │
+                    │       ├── 🔘 BOTAO_CONFIRMAR (Ação Final)
+                    │       │   ├── ✍️ texto_botao: "Confirmar Agendamento"
+                    │       │   ├── 🎨 cor_fundo: Hex
+                    │       │   ├── 🎨 cor_texto: Hex
+                    │       │   ├── 🎨 cor_hover: Hex
+                    │       │   ├── 📐 arredondamento: px
+                    │       │   └── 🎭 icone_botao: { slug: String, mostrar: Boolean }
+                    │       │
+                    │       └── ⚙️ ESTRUTURA_DO_CONTAINER
+                    │           ├── 📏 largura_maxima: px
+                    │           ├── 📏 padding_interno: px
+                    │           └── 📍 alinhamento_formulario: [Centralizado, Esquerda]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+             

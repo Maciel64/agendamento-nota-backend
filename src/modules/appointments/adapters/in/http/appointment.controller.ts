@@ -1,6 +1,6 @@
 import { Elysia, t } from "elysia";
 import { db } from "../../../../infrastructure/drizzle/database";
-import { appointment } from "../../../../../db/schema";
+import { appointments } from "../../../../../db/schema";
 import { eq } from "drizzle-orm";
 import { authPlugin } from "../../../../infrastructure/auth/auth-plugin";
 import type { User } from "../../../../infrastructure/auth/auth-plugin";
@@ -15,8 +15,8 @@ export const appointmentController = new Elysia({ prefix: "/appointments" })
 
     const data = await db
       .select()
-      .from(appointment)
-      .where(eq(appointment.userId, user.id));
+      .from(appointments)
+      .where(eq(appointments.userId, user.id));
 
     return data;
   }, {
@@ -28,7 +28,7 @@ export const appointmentController = new Elysia({ prefix: "/appointments" })
       return { error: "Unauthorized" };
     }
 
-    const newAppointment = await db.insert(appointment).values({
+    const newAppointment = await db.insert(appointments).values({
       id: crypto.randomUUID(),
       title: body.title,
       description: body.description,
