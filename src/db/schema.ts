@@ -7,6 +7,7 @@ import {
   boolean,
   index,
   jsonb,
+  numeric,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
@@ -111,39 +112,50 @@ export const companies = pgTable("companies", {
   slug: text("slug").notNull().unique(),
   address: text("address"),
   contact: text("contact"),
-  siteCustomization: jsonb("site_customization").default({
-    layout_global: {
-      header: {},
-      footer: {},
-      typography: {},
-      base_colors: {},
-    },
-    home: {
-      hero_banner: {},
-      services_section: {},
-      contact_section: {},
-    },
-    gallery: {
-      grid_config: {},
-      interactivity: {},
-    },
-    about_us: {
-      about_banner: {},
-      our_story: {},
-      our_values: [],
-      our_team: [],
-      testimonials: [],
-    },
-    appointment_flow: {
-      step_1_services: {},
-      step_2_date: {},
-      step_3_time: {},
-      step_4_confirmation: {},
-    },
-  }).notNull(),
   ownerId: text("owner_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+export const companySiteCustomizations = pgTable("company_site_customizations", {
+  id: text("id").primaryKey(),
+  companyId: text("company_id")
+    .notNull()
+    .unique()
+    .references(() => companies.id, { onDelete: "cascade" }),
+  layoutGlobal: jsonb("layout_global").default({
+    header: {},
+    footer: {},
+    typography: {},
+    base_colors: {},
+  }).notNull(),
+  home: jsonb("home").default({
+    hero_banner: {},
+    services_section: {},
+    contact_section: {},
+  }).notNull(),
+  gallery: jsonb("gallery").default({
+    grid_config: {},
+    interactivity: {},
+  }).notNull(),
+  aboutUs: jsonb("about_us").default({
+    about_banner: {},
+    our_story: {},
+    our_values: [],
+    our_team: [],
+    testimonials: [],
+  }).notNull(),
+  appointmentFlow: jsonb("appointment_flow").default({
+    step_1_services: {},
+    step_2_date: {},
+    step_3_time: {},
+    step_4_confirmation: {},
+  }).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -158,7 +170,7 @@ export const services = pgTable("services", {
     .references(() => companies.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   description: text("description"),
-  price: text("price").notNull(),
+  price: numeric("price", { precision: 10, scale: 2 }).notNull(),
   duration: text("duration").notNull(),
   icon: text("icon"),
   isVisible: boolean("is_visible").default(true).notNull(),
@@ -186,7 +198,7 @@ export const appointments = pgTable("appointments", {
   customerPhone: text("customer_phone").notNull(),
   // Snapshot do serviço no momento do agendamento
   serviceNameSnapshot: text("service_name_snapshot").notNull(),
-  servicePriceSnapshot: text("service_price_snapshot").notNull(),
+  servicePriceSnapshot: numeric("service_price_snapshot", { precision: 10, scale: 2 }).notNull(),
   serviceDurationSnapshot: text("service_duration_snapshot").notNull(),
   scheduledAt: timestamp("scheduled_at").notNull(),
   status: text("status", { enum: ["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED", "POSTPONED"] })
@@ -293,12 +305,23 @@ export const companiesRelations = relations(companies, ({ one, many }) => ({
     fields: [companies.ownerId],
     references: [user.id],
   }),
+  siteCustomization: one(companySiteCustomizations, {
+    fields: [companies.id],
+    references: [companySiteCustomizations.companyId],
+  }),
   services: many(services),
   appointments: many(appointments),
   operatingHours: many(operatingHours),
   agendaBlocks: many(agendaBlocks),
   googleCalendarConfigs: many(googleCalendarConfigs),
   inventory: many(inventory),
+}));
+
+export const companySiteCustomizationsRelations = relations(companySiteCustomizations, ({ one }) => ({
+  company: one(companies, {
+    fields: [companySiteCustomizations.companyId],
+    references: [companies.id],
+  }),
 }));
 
 export const servicesRelations = relations(services, ({ one, many }) => ({

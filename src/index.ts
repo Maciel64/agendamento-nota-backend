@@ -8,8 +8,10 @@ import { CreateUserUseCase } from "./modules/user/application/use-cases/create-u
 import { ListUsersUseCase } from "./modules/user/application/use-cases/list-users.use-case";
 import { UserRepository } from "./modules/user/adapters/out/user.repository";
 import { appointmentController } from "./modules/appointments/adapters/in/http/appointment.controller";
+import { serviceController } from "./modules/services/adapters/in/http/service.controller";
 import { reportController } from "./modules/reports/adapters/in/http/report.controller";
 import { businessController } from "./modules/business/adapters/in/http/business.controller";
+import { companyController } from "./modules/business/adapters/in/http/company.controller";
 import { publicBusinessController } from "./modules/business/adapters/in/http/public-business.controller";
 import { repositoriesPlugin } from "./modules/infrastructure/di/repositories.plugin";
 
@@ -21,24 +23,25 @@ const userController = new UserController(createUserUseCase, listUsersUseCase);
 const app = new Elysia()
   .use(
     cors({
-      origin: [
-        "http://localhost:3000",
-        "https://agendamento-nota-front.vercel.app",
-        "https://landingpage-agendamento-front.vercel.app",
-        ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
-      ],
+      origin: ["http://localhost:3000", "http://127.0.0.1:3000", "https://localhost:3000"],
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
       credentials: true,
-      allowedHeaders: ["Content-Type", "Authorization", "Cookie", "set-cookie"],
+      allowedHeaders: ["Content-Type", "Authorization", "Cookie", "set-cookie", "X-Requested-With"],
       exposeHeaders: ["Set-Cookie", "set-cookie"],
+      preflight: true
     })
   )
+  .onBeforeHandle(({ request }) => {
+    console.log(`\n[LOG] ${request.method} ${request.url}`);
+  })
   .group("/api/auth", (group) => group.mount(auth.handler))
   .use(publicBusinessController)
   .use(userController.registerRoutes())
-  // .use(appointmentController)
-  // .use(reportController)
+  .use(appointmentController)
+  .use(serviceController)
+  .use(reportController)
   .use(businessController)
+  .use(companyController)
   .onError(({ code, error, set }) => {
     console.error(`\n[ERROR] ${code}:`, error);
     return {

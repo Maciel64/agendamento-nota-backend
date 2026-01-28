@@ -13,9 +13,10 @@ export const auth = betterAuth({
   // Prioriza a URL do Front (via Proxy) se disponível, para garantir cookies First-Party
   baseURL: process.env.FRONTEND_URL
     ? `${process.env.FRONTEND_URL}/api/auth`
-    : (process.env.BETTER_AUTH_URL ? `${process.env.BETTER_AUTH_URL}/api/auth` : "http://localhost:3000/api/auth"),
+    : (process.env.BETTER_AUTH_URL ? `${process.env.BETTER_AUTH_URL}/api/auth` : "http://localhost:3001/api/auth"),
   trustedOrigins: [
     "http://localhost:3000",
+    "http://localhost:3001",
     "https://agendamento-nota-front.vercel.app",
     "https://landingpage-agendamento-front.vercel.app",
     ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
@@ -40,6 +41,8 @@ export const auth = betterAuth({
     },
   },
   session: {
+    expiresIn: 60 * 60 * 24 * 7, // 7 dias
+    updateAge: 60 * 60 * 24, // 1 dia
     cookieCache: {
       enabled: false, // Desabilitado em produção serverless para evitar inconsistências
     },
@@ -51,6 +54,13 @@ export const auth = betterAuth({
   }),
   hooks: {
     before: async (context: any) => {
+      // Normalização preventiva de headers para evitar erro forEach no Better Auth interno
+      if (context.headers && !(context.headers instanceof Headers)) {
+        try {
+          context.headers = new Headers(context.headers);
+        } catch (e) { }
+      }
+
       const path = context.path || "";
 
       // Proteção contra 500 no sign-out se não houver sessão
@@ -64,7 +74,7 @@ export const auth = betterAuth({
             return {
               response: new Response(JSON.stringify({ success: true }), {
                 status: 200,
-                headers: { "Content-Type": "application/json" },
+                headers: new Headers({ "Content-Type": "application/json" }),
               }),
             };
           }
@@ -79,18 +89,73 @@ export const auth = betterAuth({
       const response = context.response || context.context?.returned;
 
       try {
-        // Se houver erro ou status >= 400, tratamos falhas de autenticação
-        if (context.error || (response && response.status >= 400)) {
-          if (path.includes("/sign-in")) {
-            return new Response(JSON.stringify({
+        // Se houver erro, sempre retornamos uma Response com headers válidos
+        if (context.error) {
+          const isSignIn = path.includes("/sign-in");
+          const status = isSignIn ? 401 : 500;
+          const body = isSignIn
+            ? {
               error: context.error?.message || "Authentication failed",
-              message: "Credenciais inválidas ou erro de autenticação"
-            }), {
-              status: 401,
-              headers: new Headers({ "Content-Type": "application/json" })
-            });
+              message: "Credenciais inválidas ou erro de autenticação",
+            }
+            : { error: context.error?.message || "Internal error" };
+          return new Response(JSON.stringify(body), {
+            status,
+            headers: new Headers({ "Content-Type": "application/json" }),
+          });
+        }
+
+        // Se status >= 400, garantimos headers válidos e retornamos
+        if (response && response.status >= 400) {
+          if (response.headers && !(response.headers instanceof Headers)) {
+            try {
+              response.headers = new Headers(response.headers);
+            } catch { }
           }
           return response;
+        }
+
+        // Fallback seguro para /get-session caso alguma etapa anterior falhe
+        if (path.startsWith("/get-session")) {
+          try {
+            const hdrs: Headers =
+              context.headers instanceof Headers
+                ? context.headers
+                : new Headers(context.headers || {});
+            const cookie = hdrs.get("cookie") || "";
+            const token = cookie
+              .split(";")
+              .map((c) => c.trim())
+              .find((c) => c.startsWith("better-auth.sessionToken="))
+              ?.split("=")[1];
+
+            let payload: any = { user: null, session: null };
+            if (token) {
+              const [sess] = await db
+                .select()
+                .from(schema.session)
+                .where(eq(schema.session.token, token))
+                .limit(1);
+              if (sess && sess.expiresAt > new Date()) {
+                const [usr] = await db
+                  .select()
+                  .from(schema.user)
+                  .where(eq(schema.user.id, sess.userId))
+                  .limit(1);
+                payload = {
+                  session: sess,
+                  user: usr || null,
+                };
+              }
+            }
+
+            return new Response(JSON.stringify(payload), {
+              status: 200,
+              headers: new Headers({ "Content-Type": "application/json" }),
+            });
+          } catch {
+            // Se algo falhar, deixamos seguir fluxo padrão
+          }
         }
 
         // Se for sign-out, garantimos um retorno JSON para evitar Unexpected EOF no front
@@ -117,11 +182,28 @@ export const auth = betterAuth({
 
         if (user && user.id) {
           try {
-            const [userCompany] = await db
-              .select()
+            const results = await db
+              .select({
+                id: schema.companies.id,
+                name: schema.companies.name,
+                slug: schema.companies.slug,
+                ownerId: schema.companies.ownerId,
+                createdAt: schema.companies.createdAt,
+                updatedAt: schema.companies.updatedAt,
+                siteCustomization: {
+                  layoutGlobal: schema.companySiteCustomizations.layoutGlobal,
+                  home: schema.companySiteCustomizations.home,
+                  gallery: schema.companySiteCustomizations.gallery,
+                  aboutUs: schema.companySiteCustomizations.aboutUs,
+                  appointmentFlow: schema.companySiteCustomizations.appointmentFlow,
+                }
+              })
               .from(schema.companies)
+              .leftJoin(schema.companySiteCustomizations, eq(schema.companies.id, schema.companySiteCustomizations.companyId))
               .where(eq(schema.companies.ownerId, user.id))
               .limit(1);
+
+            const userCompany = results[0];
 
             if (userCompany) {
               const companyData = {
@@ -146,7 +228,7 @@ export const auth = betterAuth({
 
         // Importante: se response tiver headers, garantir que seja um objeto Headers
         // para evitar o erro "headers.forEach is not a function" no Better Auth interno
-        if (response && response.headers && typeof response.headers.forEach !== 'function') {
+        if (response && response.headers && !(response.headers instanceof Headers)) {
           try {
             response.headers = new Headers(response.headers);
           } catch (e) {
@@ -175,11 +257,28 @@ export const auth = betterAuth({
             if (!session) return ctx.json({ business: null, slug: null });
 
             const userId = session.user.id;
-            const [userCompany] = await db
-              .select()
+            const results = await db
+              .select({
+                id: schema.companies.id,
+                name: schema.companies.name,
+                slug: schema.companies.slug,
+                ownerId: schema.companies.ownerId,
+                createdAt: schema.companies.createdAt,
+                updatedAt: schema.companies.updatedAt,
+                siteCustomization: {
+                  layoutGlobal: schema.companySiteCustomizations.layoutGlobal,
+                  home: schema.companySiteCustomizations.home,
+                  gallery: schema.companySiteCustomizations.gallery,
+                  aboutUs: schema.companySiteCustomizations.aboutUs,
+                  appointmentFlow: schema.companySiteCustomizations.appointmentFlow,
+                }
+              })
               .from(schema.companies)
+              .leftJoin(schema.companySiteCustomizations, eq(schema.companies.id, schema.companySiteCustomizations.companyId))
               .where(eq(schema.companies.ownerId, userId))
               .limit(1);
+
+            const userCompany = results[0];
 
             return ctx.json({
               business: userCompany || null,

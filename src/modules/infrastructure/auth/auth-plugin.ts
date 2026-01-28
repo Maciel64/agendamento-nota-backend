@@ -10,23 +10,39 @@ export type Session = typeof auth.$Infer.Session.session;
 
 export const authPlugin = new Elysia({ name: "auth-plugin" })
     .derive({ as: 'global' }, async ({ request }) => {
-        const session = await auth.api.getSession({
-            headers: request.headers,
-        });
+        try {
+            // Tenta obter o token do Header Authorization caso não esteja nos cookies
+            const authHeader = request.headers.get("authorization");
+            const headers = new Headers(request.headers);
 
-        if (session) {
-            console.log(`[AUTH_PLUGIN] Sessão validada via Cookie para: ${session.user.email}`);
-        } else {
-            const url = new URL(request.url);
-            if (!url.pathname.includes("/get-session") && !url.pathname.includes("/sign-in")) {
-                console.log(`[AUTH_PLUGIN] Nenhuma sessão encontrada via Cookie para: ${url.pathname}`);
+            if (authHeader && authHeader.startsWith("Bearer ")) {
+                const token = authHeader.split(" ")[1];
+                // Se temos um Bearer token mas não temos o cookie correspondente, 
+                // podemos injetar o cookie manualmente para o Better Auth processar
+                if (!headers.get("cookie")?.includes("better-auth.sessionToken")) {
+                    headers.append("cookie", `better-auth.sessionToken=${token}`);
+                }
             }
-        }
 
-        return {
-            user: session?.user ?? null,
-            session: session?.session ?? null,
-        };
+            const session = await auth.api.getSession({
+                headers: headers,
+            });
+
+            if (session) {
+                console.log(`[AUTH_PLUGIN] Sessão validada para: ${session.user.email} (${authHeader ? 'Header' : 'Cookie'})`);
+            }
+
+            return {
+                user: session?.user ?? null,
+                session: session?.session ?? null,
+            };
+        } catch (error) {
+            console.error("[AUTH_PLUGIN] Erro ao obter sessão:", error);
+            return {
+                user: null,
+                session: null,
+            };
+        }
     })
     .macro({
         auth: {

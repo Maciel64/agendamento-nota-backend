@@ -22,6 +22,13 @@
       "when": 1768417147367,
       "tag": "0002_pale_vance_astro",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1769293936735,
+      "tag": "0003_watery_the_call",
+      "breakpoints": true
     }
   ]
 }
