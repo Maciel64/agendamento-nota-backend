@@ -25,7 +25,7 @@ export const auth = betterAuth({
     cookiePrefix: "better-auth",
     // Desabilitado: o proxy torna a comunicação First-Party
     crossSubDomainCookies: {
-      enabled: process.env.NODE_ENV === "production",
+      enabled: false,
     },
     // No Vercel/Produção, useSecureCookies deve ser true para permitir SameSite=None
     // Em localhost, deve ser false a menos que use HTTPS
@@ -36,7 +36,6 @@ export const auth = betterAuth({
           sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
           secure: process.env.NODE_ENV === "production",
           httpOnly: true,
-          domain: process.env.NODE_ENV === "production" ? ".vercel.app" : undefined,
         },
       },
     },
